@@ -1,0 +1,36 @@
+/* כפיית RTL על עורך Quill */
+.ql-editor {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: embed !important;
+}
+
+.ql-editor * {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.ql-editor p,
+.ql-editor div,
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3,
+.ql-editor h4,
+.ql-editor h5,
+.ql-editor h6,
+.ql-editor li,
+.ql-editor ol,
+.ql-editor ul {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.ql-container {
+  direction: rtl !important;
+}
+
+/* תיקון לכיוון הכתיבה */
+.ql-editor[contenteditable="true"] {
+  direction: rtl !important;
+  text-align: right !important;
+}
