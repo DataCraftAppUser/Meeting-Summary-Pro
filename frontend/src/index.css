@@ -48,3 +48,26 @@ code {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Fix meeting title column alignment */
+table tbody tr td:nth-child(2),
+table tbody tr td:nth-child(2) *,
+table tbody tr td:nth-child(2).MuiTableCell-root,
+table tbody tr td:nth-child(2) .MuiTypography-root {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Align other columns to right */
+table tbody tr td:nth-child(3),
+table tbody tr td:nth-child(4),
+table tbody tr td:nth-child(5) {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Reduce row height by 30% */
+table tbody tr td {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}

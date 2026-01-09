@@ -20,7 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { Meeting } from '../../types';
 import MeetingCard from './MeetingCard';
 import EmptyState from '../Common/EmptyState';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate, formatTimeAgo } from '../../utils/dateUtils';
 
 interface MeetingListProps {
   meetings: Meeting[];
@@ -106,22 +106,25 @@ export default function MeetingList({
       >
         <TableHead>
           <TableRow sx={{ backgroundColor: 'grey.100' }}>
-            <TableCell align="right" sx={{ fontWeight: 'bold', width: '12%' }}>
+            <TableCell align="center" sx={{ fontWeight: 'bold', width: '10%' }}>
               תאריך
             </TableCell>
-            <TableCell align="right" sx={{ fontWeight: 'bold', width: '28%' }}>
+            <TableCell align="center" sx={{ fontWeight: 'bold', width: '24%' }}>
               כותרת
             </TableCell>
-            <TableCell align="right" sx={{ fontWeight: 'bold', width: '18%' }}>
+            <TableCell align="center" sx={{ fontWeight: 'bold', width: '14%' }}>
               לקוח
             </TableCell>
-            <TableCell align="right" sx={{ fontWeight: 'bold', width: '18%' }}>
+            <TableCell align="center" sx={{ fontWeight: 'bold', width: '14%' }}>
               פרויקט
             </TableCell>
-            <TableCell align="right" sx={{ fontWeight: 'bold', width: '12%' }}>
+            <TableCell align="center" sx={{ fontWeight: 'bold', width: '10%' }}>
               סטטוס
             </TableCell>
-            <TableCell align="right" sx={{ fontWeight: 'bold', width: '12%' }}>
+            <TableCell align="center" sx={{ fontWeight: 'bold', width: '13%' }}>
+              עדכון אחרון
+            </TableCell>
+            <TableCell align="center" sx={{ fontWeight: 'bold', width: '10%' }}>
               פעולות
             </TableCell>
           </TableRow>
@@ -143,12 +146,24 @@ export default function MeetingList({
                   {formatDate(meeting.meeting_date)}
                 </Typography>
               </TableCell>
-              <TableCell align="right">
+              <TableCell 
+                align="right" 
+                sx={{ 
+                  '& .MuiTypography-root': {
+                    textAlign: 'right !important',
+                    direction: 'rtl !important',
+                  },
+                  textAlign: 'right !important',
+                  direction: 'rtl !important',
+                }}
+              >
                 <Typography
-                  variant="body1"
+                  variant="body2"
                   sx={{
                     fontWeight: 500,
                     cursor: 'pointer',
+                    textAlign: 'right !important',
+                    direction: 'rtl !important',
                     '&:hover': {
                       color: 'primary.main',
                       textDecoration: 'underline',
@@ -172,12 +187,17 @@ export default function MeetingList({
                   {(meeting as any).projects?.name || 'לא צוין'}
                 </Typography>
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="center">
                 <Chip
                   label={getStatusLabel(meeting.status)}
                   color={getStatusColor(meeting.status) as any}
                   size="small"
                 />
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right', display: 'block' }}>
+                  עודכן {formatTimeAgo(meeting.created_at)}
+                </Typography>
               </TableCell>
               <TableCell align="right">
                 <Box display="flex" gap={0.5}>

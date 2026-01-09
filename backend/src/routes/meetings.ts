@@ -113,7 +113,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const offset = (Number(page) - 1) * Number(limit);
-    query = query.order('meeting_date', { ascending: false }).range(offset, offset + Number(limit) - 1);
+    query = query.order('created_at', { ascending: false }).range(offset, offset + Number(limit) - 1);
 
     const { data, error, count } = await query;
     if (error) throw new AppError(error.message, 500);
