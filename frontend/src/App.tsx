@@ -6,6 +6,7 @@ import Layout from './components/Layout/Layout';
 import MeetingsList from './pages/MeetingsList';
 import MeetingEditor from './pages/MeetingEditor';
 import MeetingView from './pages/MeetingView';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/meetings/new" element={<MeetingEditor />} />
           <Route path="/meetings/:id/edit" element={<MeetingEditor />} />
           <Route path="/meetings/:id" element={<MeetingView />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/meetings" replace />} />
         </Routes>
       </Layout>

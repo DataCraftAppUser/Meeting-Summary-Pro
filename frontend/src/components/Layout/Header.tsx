@@ -13,6 +13,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import HomeIcon from '@mui/icons-material/Home';
 import BusinessIcon from '@mui/icons-material/Business';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -41,6 +42,15 @@ export default function Header() {
         <Typography variant="subtitle2" sx={{ mr: 3, display: { xs: 'none', sm: 'block' } }}>
           סיכומי פגישות
         </Typography>
+
+        <IconButton
+          color="inherit"
+          onClick={() => navigate('/settings')}
+          sx={{ mr: 1 }}
+          title="הגדרות"
+        >
+          <SettingsIcon />
+        </IconButton>
 
         <Button
           variant="contained"
