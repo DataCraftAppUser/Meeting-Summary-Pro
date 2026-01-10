@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  Box,
   TextField,
   MenuItem,
   Grid,
   InputAdornment,
+  Box,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { Client, Project } from '../../types';
@@ -13,31 +13,27 @@ interface MeetingFiltersProps {
   searchQuery: string;
   selectedClient: string;
   selectedProject: string;
-  selectedStatus: string;
   clients: Client[];
   projects: Project[];
   onSearchChange: (value: string) => void;
   onClientChange: (value: string) => void;
   onProjectChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
 }
 
 export default function MeetingFilters({
   searchQuery,
   selectedClient,
   selectedProject,
-  selectedStatus,
   clients,
   projects,
   onSearchChange,
   onClientChange,
   onProjectChange,
-  onStatusChange,
 }: MeetingFiltersProps) {
   return (
     <Box sx={{ mb: 3 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={4}>
           <TextField
             fullWidth
             placeholder="חיפוש..."
@@ -53,7 +49,7 @@ export default function MeetingFilters({
           />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={4}>
           <TextField
             select
             fullWidth
@@ -70,7 +66,7 @@ export default function MeetingFilters({
           </TextField>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={4}>
           <TextField
             select
             fullWidth
@@ -87,21 +83,6 @@ export default function MeetingFilters({
                   {project.name}
                 </MenuItem>
               ))}
-          </TextField>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <TextField
-            select
-            fullWidth
-            label="סטטוס"
-            value={selectedStatus}
-            onChange={(e) => onStatusChange(e.target.value)}
-          >
-            <MenuItem value="">כל הסטטוסים</MenuItem>
-            <MenuItem value="draft">טיוטה</MenuItem>
-            <MenuItem value="final">סופי</MenuItem>
-            <MenuItem value="archived">בארכיון</MenuItem>
           </TextField>
         </Grid>
       </Grid>

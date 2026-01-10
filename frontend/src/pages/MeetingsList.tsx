@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Pagination, ToggleButtonGroup, ToggleButton, Container } from '@mui/material';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
@@ -30,7 +30,6 @@ export default function MeetingsList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState('');
   const [selectedProject, setSelectedProject] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -48,28 +47,27 @@ export default function MeetingsList() {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, [page, searchQuery, selectedClient, selectedProject, selectedStatus]);
-
-  useEffect(() => {
-    fetchClients();
-    fetchProjects();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setError(false);
       await fetchMeetings({
         search: searchQuery || undefined,
         client_id: selectedClient || undefined,
         project_id: selectedProject || undefined,
-        status: (selectedStatus as 'draft' | 'final' | 'archived' | undefined) || undefined,
       });
     } catch (err) {
       setError(true);
     }
-  };
+  }, [fetchMeetings, searchQuery, selectedClient, selectedProject]);
+
+  useEffect(() => {
+    loadData();
+  }, [page, loadData]);
+
+  useEffect(() => {
+    fetchClients();
+    fetchProjects();
+  }, [fetchClients, fetchProjects]);
 
   const handleDelete = (id: string) => {
     setMeetingToDelete(id);
@@ -129,13 +127,11 @@ export default function MeetingsList() {
         searchQuery={searchQuery}
         selectedClient={selectedClient}
         selectedProject={selectedProject}
-        selectedStatus={selectedStatus}
         clients={clients}
         projects={projects}
         onSearchChange={setSearchQuery}
         onClientChange={setSelectedClient}
         onProjectChange={setSelectedProject}
-        onStatusChange={setSelectedStatus}
       />
 
       {loading ? (
