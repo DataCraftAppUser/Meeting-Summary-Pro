@@ -1,7 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, ThemeProvider } from '@mui/material';
 import { ToastProvider } from './hooks/useToast';
+import { theme } from './theme';
 import Layout from './components/Layout/Layout';
 import MeetingsList from './pages/MeetingsList';
 import MeetingEditor from './pages/MeetingEditor';
@@ -10,8 +11,9 @@ import Settings from './pages/Settings';
 
 function App() {
   return (
-    <ToastProvider>
-      <Layout>
+    <ThemeProvider theme={theme}>
+      <ToastProvider>
+        <Layout>
         <Routes>
           <Route path="/" element={<Navigate to="/meetings" replace />} />
           <Route path="/meetings" element={<MeetingsList />} />
@@ -23,6 +25,7 @@ function App() {
         </Routes>
       </Layout>
     </ToastProvider>
+    </ThemeProvider>
   );
 }
 

@@ -40,8 +40,6 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { MeetingFormData, Client, Project, ActionItem } from '../../types';
 
-
-
 // פונקציה פשוטה ליצירת ID זמני
 const generateTempId = () => `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -367,9 +365,6 @@ export default function MeetingForm({
           </AccordionSummary>
           <AccordionDetails>
             <Box sx={{ mb: 3 }}>
-			  <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: 'text.secondary' }}>
-				תוכן הפגישה *
-			  </Typography>
 			  <RichTextEditor
 				value={formData.content || ''}
 				onChange={(value) => onChange({ content: value })}
@@ -380,7 +375,7 @@ export default function MeetingForm({
         </Accordion>
 
         {/* ========================================
-            Section 3: הגדרות נוספות
+            Section 3: מידע נוסף
         ======================================== */}
         <Accordion
           expanded={expandedSections.includes('section3')}
@@ -390,7 +385,7 @@ export default function MeetingForm({
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box display="flex" alignItems="center" gap={1}>
               <SettingsIcon color="primary" />
-              <Typography variant="h6">הגדרות נוספות</Typography>
+              <Typography variant="h6">מידע נוסף</Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails>

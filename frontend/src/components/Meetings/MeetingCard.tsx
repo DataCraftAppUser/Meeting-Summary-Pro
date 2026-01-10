@@ -60,25 +60,42 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: 'pointer',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: 4,
+          transform: 'translateY(-8px) scale(1.02)',
+          boxShadow: '0 20px 40px -12px rgba(26, 54, 93, 0.25), 0 8px 16px -8px rgba(26, 54, 93, 0.1)',
+        },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          background: `linear-gradient(90deg, ${getStatusColor(meeting.status) === 'warning' ? '#d69e2e' :
+            getStatusColor(meeting.status) === 'success' ? '#38a169' :
+            getStatusColor(meeting.status) === 'default' ? '#4a5568' : '#38b2ac'}, transparent)`,
         },
       }}
     >
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-          <Typography 
-            variant="h6" 
-            component="div" 
-            gutterBottom
+      <CardContent sx={{ flexGrow: 1, p: 3 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+          <Typography
+            variant="h6"
+            component="div"
             onClick={() => navigate(`/meetings/${meeting.id}`)}
             sx={{
+              fontWeight: 600,
+              fontSize: '1.125rem',
+              lineHeight: 1.3,
+              color: 'text.primary',
               cursor: 'pointer',
+              transition: 'color 0.2s ease',
               '&:hover': {
                 color: 'primary.main',
-                textDecoration: 'underline',
               },
             }}
           >
@@ -88,54 +105,159 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
             label={getStatusLabel(meeting.status)}
             color={getStatusColor(meeting.status)}
             size="small"
+            sx={{
+              fontWeight: 500,
+              fontSize: '0.75rem',
+              borderRadius: 1,
+            }}
           />
         </Box>
 
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {(meeting as any).clients?.name || 'לא צוין'} • {(meeting as any).projects?.name || 'לא צוין'}
-        </Typography>
+        <Box sx={{ mb: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              fontWeight: 500,
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <Box
+              component="span"
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: 'primary.main',
+                display: 'inline-block',
+              }}
+            />
+            {(meeting as any).clients?.name || 'לא צוין'} • {(meeting as any).projects?.name || 'לא צוין'}
+          </Typography>
 
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          📅 {formatDate(meeting.meeting_date)}
-        </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            📅 {formatDate(meeting.meeting_date)}
+          </Typography>
+        </Box>
 
-        <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            mt: 2,
+            mb: 2,
+            lineHeight: 1.6,
+            color: 'text.secondary',
+          }}
+        >
           {truncateText(plainText, 150)}
         </Typography>
 
-        <Typography variant="caption" color="text.secondary">
-          עודכן {formatTimeAgo(meeting.updated_at)}
-        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mt: 'auto',
+            pt: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              fontWeight: 500,
+            }}
+          >
+            עודכן {formatTimeAgo(meeting.updated_at)}
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 0.5,
+              opacity: 0.7,
+              transition: 'opacity 0.2s ease',
+              '&:hover': {
+                opacity: 1,
+              },
+            }}
+          >
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/meetings/${meeting.id}`);
+              }}
+              sx={{
+                p: 0.5,
+                borderRadius: 1,
+                '&:hover': {
+                  backgroundColor: 'rgba(26, 54, 93, 0.04)',
+                },
+              }}
+            >
+              <VisibilityIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/meetings/${meeting.id}/edit`);
+              }}
+              sx={{
+                p: 0.5,
+                borderRadius: 1,
+                '&:hover': {
+                  backgroundColor: 'rgba(26, 54, 93, 0.04)',
+                },
+              }}
+            >
+              <EditIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
+        </Box>
       </CardContent>
 
-      <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-        <Box>
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => navigate(`/meetings/${meeting.id}`)}
-            title="צפייה"
-          >
-            <VisibilityIcon />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => navigate(`/meetings/${meeting.id}/edit`)}
-            title="עריכה"
-          >
-            <EditIcon />
-          </IconButton>
-        </Box>
+      <Box
+        sx={{
+          p: 2,
+          pt: 0,
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
+      >
         <IconButton
           size="small"
           color="error"
-          onClick={() => onDelete(meeting.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(meeting.id);
+          }}
+          sx={{
+            borderRadius: 1,
+            '&:hover': {
+              backgroundColor: 'rgba(229, 62, 62, 0.04)',
+            },
+          }}
           title="מחיקה"
         >
-          <DeleteIcon />
+          <DeleteIcon sx={{ fontSize: 16 }} />
         </IconButton>
-      </CardActions>
+      </Box>
     </Card>
   );
 }

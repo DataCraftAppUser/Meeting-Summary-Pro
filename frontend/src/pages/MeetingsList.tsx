@@ -95,44 +95,104 @@ export default function MeetingsList() {
   }
 
   return (
-    <Container maxWidth="lg">
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+    <Container maxWidth="xl">
+      <Box
+        mb={6}
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{
+          background: 'white',
+          borderRadius: 3,
+          p: 4,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+          border: '1px solid rgba(226, 232, 240, 0.8)',
+        }}
+      >
         <Box>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
+          <Typography
+            variant="h3"
+            component="h1"
+            gutterBottom
+            fontWeight={700}
+            sx={{
+              background: 'linear-gradient(135deg, #1a365d 0%, #2d3748 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              mb: 2,
+            }}
+          >
             סיכומי פגישות
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            נהל את כל סיכומי הפגישות שלך במקום אחד
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{ fontWeight: 400, lineHeight: 1.6 }}
+          >
+            נהל את כל סיכומי הפגישות שלך במקום אחד עם AI מתקדם
           </Typography>
         </Box>
-        
+
         {/* ✨ כפתורי החלפת תצוגה */}
         <ToggleButtonGroup
           value={viewMode}
           exclusive
           onChange={handleViewModeChange}
           aria-label="תצוגה"
-          size="small"
+          size="medium"
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            borderRadius: 2,
+            p: 0.5,
+            '& .MuiToggleButton-root': {
+              borderRadius: 2,
+              mx: 0.5,
+              px: 2,
+              py: 1,
+              border: 'none',
+              '&.Mui-selected': {
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+              },
+            },
+          }}
         >
           <ToggleButton value="grid" aria-label="תצוגת כרטיסים">
-            <ViewModuleIcon />
+            <ViewModuleIcon sx={{ mr: 1 }} />
+            כרטיסים
           </ToggleButton>
           <ToggleButton value="table" aria-label="תצוגת טבלה">
-            <ViewListIcon />
+            <ViewListIcon sx={{ mr: 1 }} />
+            טבלה
           </ToggleButton>
         </ToggleButtonGroup>
       </Box>
 
-      <MeetingFilters
-        searchQuery={searchQuery}
-        selectedClient={selectedClient}
-        selectedProject={selectedProject}
-        clients={clients}
-        projects={projects}
-        onSearchChange={setSearchQuery}
-        onClientChange={setSelectedClient}
-        onProjectChange={setSelectedProject}
-      />
+      <Box
+        sx={{
+          background: 'white',
+          borderRadius: 3,
+          p: 3,
+          mb: 4,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+          border: '1px solid rgba(226, 232, 240, 0.8)',
+        }}
+      >
+        <MeetingFilters
+          searchQuery={searchQuery}
+          selectedClient={selectedClient}
+          selectedProject={selectedProject}
+          clients={clients}
+          projects={projects}
+          onSearchChange={setSearchQuery}
+          onClientChange={setSelectedClient}
+          onProjectChange={setSelectedProject}
+        />
+      </Box>
 
       {loading ? (
         <Loading message="טוען סיכומים..." />
@@ -146,13 +206,29 @@ export default function MeetingsList() {
           />
 
           {total > 10 && (
-            <Box display="flex" justifyContent="center" mt={4}>
+            <Box
+              display="flex"
+              justifyContent="center"
+              mt={6}
+              sx={{
+                background: 'white',
+                borderRadius: 3,
+                p: 3,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                border: '1px solid rgba(226, 232, 240, 0.8)',
+              }}
+            >
               <Pagination
                 count={Math.ceil(total / 10)}
                 page={page}
                 onChange={handlePageChange}
                 color="primary"
                 size="large"
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    borderRadius: 2,
+                  },
+                }}
               />
             </Box>
           )}
