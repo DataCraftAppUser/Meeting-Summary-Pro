@@ -165,9 +165,15 @@ async function verifyConnections() {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY not found in environment variables');
     }
-    console.log('✅ Gemini API ready');
+    
+    // Try a simple generation to verify the key and model
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    await model.generateContent('test');
+    
+    console.log('✅ Gemini API ready and verified');
   } catch (error: any) {
-    console.error('❌ Gemini API initialization failed:', error.message);
+    console.error('❌ Gemini API verification failed:', error.message);
     console.error('   Please check GEMINI_API_KEY in .env');
   }
 
