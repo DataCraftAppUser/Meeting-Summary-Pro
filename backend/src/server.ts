@@ -196,7 +196,9 @@ async function startServer() {
   }
 }
 
-// Start the server
-startServer();
+// Start the server only if not in serverless environment
+if (process.env.VERCEL !== '1') {
+  startServer();
+}
 
 export default app;
