@@ -160,6 +160,7 @@ export const translateMeeting = async (
 
     const prompt = PROMPTS.TRANSLATE.replace('{content}', content);
 
+    const model = await getModel();
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const translatedContent = response.text();
@@ -191,6 +192,7 @@ export const enrichMeetingContent = async (content: string): Promise<string> => 
 
     const prompt = PROMPTS.ENRICH.replace('{content}', content);
 
+    const model = await getModel();
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const enrichedContent = response.text();
@@ -211,6 +213,7 @@ export const enrichMeetingContent = async (content: string): Promise<string> => 
  */
 export const testGeminiConnection = async (): Promise<boolean> => {
   try {
+    const model = await getModel();
     const result = await model.generateContent('Hello, respond with OK if you work.');
     const response = await result.response;
     const text = response.text();
