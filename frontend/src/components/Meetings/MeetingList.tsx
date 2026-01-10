@@ -42,7 +42,7 @@ export default function MeetingList({
       case 'draft':
         return 'default';
       case 'processed':
-        return 'warning';
+        return 'info';
       case 'final':
         return 'success';
       case 'archived':
@@ -55,7 +55,7 @@ export default function MeetingList({
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'טיוטה';
+        return 'גרסת מקור';
       case 'processed':
         return 'מעובד';
       case 'final':
@@ -198,8 +198,8 @@ export default function MeetingList({
                   size="small"
                 />
               </TableCell>
-              <TableCell align="right">
-                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right', display: 'block' }}>
+              <TableCell align="center">
+                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
                   עודכן {formatTimeAgo(meeting.created_at)}
                 </Typography>
               </TableCell>

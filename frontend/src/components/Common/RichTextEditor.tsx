@@ -6,6 +6,7 @@ import { Editor as TinyMCEEditor } from 'tinymce';
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onFocus?: () => void;
   placeholder?: string;
   readOnly?: boolean;
 }
@@ -13,6 +14,7 @@ interface RichTextEditorProps {
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
   value,
   onChange,
+  onFocus,
   placeholder = 'הזן תוכן...',
   readOnly = false,
 }) => {
@@ -23,6 +25,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         value={value}
         disabled={readOnly}
         onEditorChange={(content: string) => onChange(content)}
+        onFocus={() => onFocus && onFocus()}
         init={{
           height: 500,
           menubar: false,

@@ -114,11 +114,22 @@ export default function MeetingForm({
   }, [followUpRequired, followUpTbd]);
 
   const handleAccordionChange = (section: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpandedSections(prev => 
-      isExpanded 
-        ? [...prev, section]
-        : prev.filter(s => s !== section)
-    );
+    setExpandedSections(prev => {
+      if (isExpanded) {
+        if (section === 'section2') {
+          // צמצם את פרטי הפגישה כשפותחים את התוכן
+          return [...prev.filter(s => s !== 'section1'), section];
+        }
+        return [...prev, section];
+      } else {
+        return prev.filter(s => s !== section);
+      }
+    });
+  };
+
+  const handleEditorFocus = () => {
+    // צמצם את פרטי הפגישה כשהעורך בפוקוס
+    setExpandedSections(prev => prev.filter(s => s !== 'section1'));
   };
 
   // Action Items handlers
@@ -375,6 +386,7 @@ export default function MeetingForm({
 			  <RichTextEditor
 				value={formData.content || ''}
 				onChange={(value) => onChange({ content: value })}
+				onFocus={handleEditorFocus}
 				placeholder="הזן את תוכן הפגישה..."
 			  />
 			</Box>

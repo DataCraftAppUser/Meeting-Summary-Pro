@@ -236,7 +236,7 @@ const MeetingView = () => {
           )}
           <Chip label={formatDate(meeting.meeting_date)} />
           <Chip 
-            label={meeting.status === 'processed' ? 'מעובד' : meeting.status === 'draft' ? 'טיוטה' : 'ארכיון'}
+            label={meeting.status === 'processed' ? 'מעובד' : meeting.status === 'draft' ? 'גרסת מקור' : 'ארכיון'}
             color={meeting.status === 'processed' ? 'warning' : 'default'}
           />
         </Stack>

@@ -30,7 +30,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
       case 'draft':
         return 'default';
       case 'processed':
-        return 'warning';
+        return 'info';
       case 'final':
         return 'success';
       case 'archived':
@@ -43,7 +43,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'טיוטה';
+        return 'גרסת מקור';
       case 'processed':
         return 'מעובד';
       case 'final':
@@ -79,7 +79,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
           left: 0,
           right: 0,
           height: '4px',
-          background: `linear-gradient(90deg, ${getStatusColor(meeting.status) === 'warning' ? '#d69e2e' :
+          background: `linear-gradient(90deg, ${getStatusColor(meeting.status) === 'info' ? '#3182ce' :
             getStatusColor(meeting.status) === 'success' ? '#38a169' :
             getStatusColor(meeting.status) === 'default' ? '#4a5568' : '#38b2ac'}, transparent)`,
         },

@@ -470,7 +470,7 @@ ${content}
             }}
             size="small"
           >
-            <ToggleButton value="raw">גרסה מקורית</ToggleButton>
+            <ToggleButton value="raw">גרסת מקור</ToggleButton>
             <ToggleButton 
               value="processed" 
               disabled={!meeting.processed_content}
