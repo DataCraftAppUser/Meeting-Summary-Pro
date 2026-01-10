@@ -1,21 +1,21 @@
 /**
- * Clients Routes
- * ניהול לקוחות - CRUD פשוט
+ * Workspaces Routes
+ * ניהול Workspaces - CRUD פשוט
  */
 
 import { Router, Request, Response } from 'express';
-import { supabase } from '../services/supabase';
+import { supabase } from '../config/supabase';
 import { AppError, asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
-// GET /api/clients - כל הלקוחות
+// GET /api/workspaces - כל ה-Workspaces
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
     const { search, sort = 'name', order = 'asc' } = req.query;
 
-    let query = supabase.from('clients').select('*');
+    let query = supabase.from('workspaces').select('*');
 
     if (search) {
       query = query.ilike('name', `%${search}%`);
@@ -26,90 +26,90 @@ router.get(
     const { data, error } = await query;
 
     if (error) {
-      throw new AppError(`Failed to fetch clients: ${error.message}`, 500);
+      throw new AppError(`Failed to fetch workspaces: ${error.message}`, 500);
     }
 
     res.json({ success: true, data });
   })
 );
 
-// GET /api/clients/:id - לקוח בודד
+// GET /api/workspaces/:id - Workspace בודד
 router.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const { data, error } = await supabase
-      .from('clients')
-      .select('*, projects(*), meetings(*)')
+      .from('workspaces')
+      .select('*, topics(*), items(*)')
       .eq('id', req.params.id)
       .single();
 
     if (error || !data) {
-      throw new AppError('Client not found', 404);
+      throw new AppError('Workspace not found', 404);
     }
 
     res.json({ success: true, data });
   })
 );
 
-// POST /api/clients - יצירת לקוח
+// POST /api/workspaces - יצירת Workspace
 router.post(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
     const { name, email, phone, company, notes } = req.body;
 
     if (!name) {
-      throw new AppError('Client name is required', 400);
+      throw new AppError('Workspace name is required', 400);
     }
 
     const { data, error } = await supabase
-      .from('clients')
+      .from('workspaces')
       .insert({ name, email, phone, company, notes })
       .select()
       .single();
 
     if (error) {
-      throw new AppError(`Failed to create client: ${error.message}`, 500);
+      throw new AppError(`Failed to create workspace: ${error.message}`, 500);
     }
 
     res.status(201).json({ success: true, data });
   })
 );
 
-// PUT /api/clients/:id - עדכון לקוח
+// PUT /api/workspaces/:id - עדכון Workspace
 router.put(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const { name, email, phone, company, notes } = req.body;
 
     const { data, error } = await supabase
-      .from('clients')
+      .from('workspaces')
       .update({ name, email, phone, company, notes })
       .eq('id', req.params.id)
       .select()
       .single();
 
     if (error) {
-      throw new AppError(`Failed to update client: ${error.message}`, 500);
+      throw new AppError(`Failed to update workspace: ${error.message}`, 500);
     }
 
     res.json({ success: true, data });
   })
 );
 
-// DELETE /api/clients/:id - מחיקת לקוח
+// DELETE /api/workspaces/:id - מחיקת Workspace
 router.delete(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const { error } = await supabase
-      .from('clients')
+      .from('workspaces')
       .delete()
       .eq('id', req.params.id);
 
     if (error) {
-      throw new AppError(`Failed to delete client: ${error.message}`, 500);
+      throw new AppError(`Failed to delete workspace: ${error.message}`, 500);
     }
 
-    res.json({ success: true, message: 'Client deleted' });
+    res.json({ success: true, message: 'Workspace deleted' });
   })
 );
 

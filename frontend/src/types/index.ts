@@ -1,53 +1,53 @@
 // ========================================
-// Client Types
+// Workspace Types
 // ========================================
 
-export interface Client {
+export interface Workspace {
   id: string;
   name: string;
   email?: string;
   phone?: string;
-  address?: string;
-  contact_person?: string;
+  company?: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface ClientFormData {
+export interface WorkspaceFormData {
   name: string;
   email?: string;
   phone?: string;
-  address?: string;
-  contact_person?: string;
+  company?: string;
+  notes?: string;
 }
 
 // ========================================
-// Project Types
+// Topic Types
 // ========================================
 
-export interface Project {
+export interface Topic {
   id: string;
-  client_id: string;
+  workspace_id: string | null;
   name: string;
   description?: string;
   status: 'active' | 'completed' | 'on_hold' | 'cancelled';
   start_date?: string;
-  end_date?: string;
+  deadline?: string;
   estimated_hours?: number;
   budget_amount?: number;
   hourly_rate?: number;
   created_at: string;
   updated_at: string;
-  client?: Client;
+  workspaces?: Workspace;
 }
 
-export interface ProjectFormData {
-  client_id: string;
+export interface TopicFormData {
+  workspace_id: string;
   name: string;
   description?: string;
-  status: 'active' | 'completed' | 'on_hold' | 'cancelled';
+  status?: 'active' | 'completed' | 'on_hold' | 'cancelled';
   start_date?: string;
-  end_date?: string;
+  deadline?: string;
   estimated_hours?: number;
   budget_amount?: number;
   hourly_rate?: number;
@@ -65,62 +65,64 @@ export interface ActionItem {
 }
 
 // ========================================
-// Meeting Types
+// Item Types
 // ========================================
 
-export interface Meeting {
+export interface Item {
   id: string;
-  client_id?: string;
-  project_id?: string;
+  workspace_id?: string;
+  topic_id?: string;
   title: string;
   meeting_date: string;
-  meeting_time?: string;                    // ✨ חדש
+  meeting_time?: string;
   participants?: string[];
+  content_type?: 'meeting' | 'work_log' | 'knowledge';
   content: string;
   processed_content?: string;
   full_raw_content?: string;
-  action_items?: ActionItem[];              // ✨ חדש
-  follow_up_required?: boolean;             // ✨ חדש
-  follow_up_date?: string;                  // ✨ חדש
-  follow_up_time?: string;                  // ✨ חדש
-  follow_up_tbd?: boolean;                  // ✨ חדש
-  is_processed_manually_updated?: boolean;  // ✨ חדש
+  action_items?: ActionItem[];
+  follow_up_required?: boolean;
+  follow_up_date?: string;
+  follow_up_time?: string;
+  follow_up_tbd?: boolean;
+  is_processed_manually_updated?: boolean;
   status: 'draft' | 'final' | 'archived' | 'processing' | 'processed';
   created_at: string;
   updated_at: string;
   last_edited_at?: string;
-  clients?: {
+  workspaces?: {
     id: string;
     name: string;
   };
-  projects?: {
+  topics?: {
     id: string;
     name: string;
   };
 }
 
-export interface MeetingFormData {
-  client_id?: string;
-  project_id?: string;
+export interface ItemFormData {
+  workspace_id?: string;
+  topic_id?: string;
   title: string;
   meeting_date: string;
-  meeting_time?: string;                    // ✨ חדש
+  meeting_time?: string;
   participants?: string[];
+  content_type?: 'meeting' | 'work_log' | 'knowledge';
   content: string;
-  processed_content?: string;               // ✨ חדש
-  full_raw_content?: string;                // ✨ חדש
-  action_items?: ActionItem[];              // ✨ חדש
-  follow_up_required?: boolean;             // ✨ חדש
-  follow_up_date?: string;                  // ✨ חדש
-  follow_up_time?: string;                  // ✨ חדש
-  follow_up_tbd?: boolean;                  // ✨ חדש
-  is_processed_manually_updated?: boolean;  // ✨ חדש
+  processed_content?: string;
+  full_raw_content?: string;
+  action_items?: ActionItem[];
+  follow_up_required?: boolean;
+  follow_up_date?: string;
+  follow_up_time?: string;
+  follow_up_tbd?: boolean;
+  is_processed_manually_updated?: boolean;
   status?: 'draft' | 'final' | 'archived' | 'processing' | 'processed';
 }
 
-export interface MeetingVersion {
+export interface ItemVersion {
   id: string;
-  meeting_id: string;
+  item_id: string;
   version_number: number;
   content: string;
   processed_content?: string;
@@ -128,18 +130,20 @@ export interface MeetingVersion {
   created_by?: string;
 }
 
-export interface MeetingTranslation {
+export interface ItemTranslation {
   id: string;
-  meeting_id: string;
+  item_id: string;
   language: string;
   translated_content: string;
+  translated_processed_content?: string;
   created_at: string;
 }
 
-export interface MeetingFilters {
-  client_id?: string;
-  project_id?: string;
+export interface ItemFilters {
+  workspace_id?: string;
+  topic_id?: string;
   status?: string;
+  content_type?: string;
   search?: string;
 }
 
@@ -149,8 +153,8 @@ export interface MeetingFilters {
 
 export interface TimeEntry {
   id: string;
-  project_id: string;
-  meeting_id?: string;
+  topic_id: string;
+  item_id?: string;
   user_id?: string;
   description: string;
   hours: number;
@@ -186,13 +190,13 @@ export interface PaginatedResponse<T> {
 // AI Processing Types
 // ========================================
 
-export interface ProcessMeetingRequest {
-  meeting_id: string;
+export interface ProcessItemRequest {
+  item_id: string;
   content: string;
 }
 
-export interface ProcessMeetingResponse {
-  meeting_id: string;
+export interface ProcessItemResponse {
+  item_id: string;
   processed_content: string;
   status: string;
 }

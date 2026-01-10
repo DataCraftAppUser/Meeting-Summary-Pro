@@ -27,19 +27,19 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   DeleteForever as DeleteForeverIcon,
 } from '@mui/icons-material';
-import { useMeetings } from '../hooks/useMeetings';
+import { useItems } from '../hooks/useItems';
 import { useToast } from '../hooks/useToast';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
 import Loading from '../components/Common/Loading';
 import RichTextEditor from '../components/Common/RichTextEditor';
 
-const MeetingView = () => {
+const ItemView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getMeeting, processMeeting, translateMeeting, updateMeeting } = useMeetings();
+  const { getItem, processItem, translateItem, updateItem } = useItems();
   const { showToast } = useToast();
 
-  const [meeting, setMeeting] = useState<any>(null);
+  const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [translating, setTranslating] = useState(false);
@@ -54,64 +54,64 @@ const MeetingView = () => {
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadMeeting();
+    loadItem();
   }, [id]);
 
-  const loadMeeting = async () => {
+  const loadItem = async () => {
     if (!id) return;
 
     setLoading(true);
     try {
-      console.log('📥 Loading meeting:', id);
-      const data = await getMeeting(id);
-      console.log('✅ Meeting loaded:', data);
+      console.log('📥 Loading item:', id);
+      const data = await getItem(id);
+      console.log('✅ Item loaded:', data);
       
       if (data) {
-        setMeeting(data);
+        setItem(data);
         
         if (data.processed_content) {
           setViewMode('processed');
         }
       }
     } catch (error) {
-      console.error('❌ Error loading meeting:', error);
-      showToast('שגיאה בטעינת הסיכום', 'error');
-      navigate('/meetings');
+      console.error('❌ Error loading item:', error);
+      showToast('שגיאה בטעינת הפריט', 'error');
+      navigate('/items');
     } finally {
       setLoading(false);
     }
   };
 
   const handleProcess = async () => {
-    if (!meeting) return;
+    if (!item) return;
 
     setProcessing(true);
     try {
-      console.log('🤖 Starting process for meeting:', meeting.id);
+      console.log('🤖 Starting process for item:', item.id);
       
-      await processMeeting(meeting.id, meeting.content);
+      await processItem(item.id);
       
-      console.log('✅ Process completed, reloading meeting...');
+      console.log('✅ Process completed, reloading item...');
       
-      await loadMeeting();
+      await loadItem();
       
       setViewMode('processed');
       
-      showToast('הסיכום עובד בהצלחה', 'success');
+      showToast('הפריט עובד בהצלחה', 'success');
     } catch (error) {
       console.error('❌ Error in handleProcess:', error);
-      showToast('שגיאה בעיבוד הסיכום', 'error');
+      showToast('שגיאה בעיבוד הפריט', 'error');
     } finally {
       setProcessing(false);
     }
   };
 
   const handleTranslate = async () => {
-    if (!meeting) return;
+    if (!item) return;
 
     setTranslating(true);
     try {
-      const result = await translateMeeting(meeting.id, 'en');
+      const result = await translateItem(item.id, 'en');
       
       if (!result) {
         throw new Error('Translation failed');
@@ -124,13 +124,13 @@ const MeetingView = () => {
           <html dir="ltr" lang="en">
           <head>
             <meta charset="UTF-8">
-            <title>${meeting.title} - Translation</title>
+            <title>${item.title} - Translation</title>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.8; padding: 20px; direction: ltr; text-align: left; }
             </style>
           </head>
           <body>
-            ${result.content || result}
+            ${result.translated_content || result.content || result}
           </body>
           </html>
         `);
@@ -140,16 +140,16 @@ const MeetingView = () => {
       showToast('התרגום הושלם', 'success');
     } catch (error) {
       console.error('❌ Translation error:', error);
-      showToast('שגיאה בתרגום הסיכום', 'error');
+      showToast('שגיאה בתרגום הפריט', 'error');
     } finally {
       setTranslating(false);
     }
   };
 
   // ✅ חישוב התוכן ל-useMemo
-  const content = meeting ? (viewMode === 'raw'
-    ? (meeting as any).full_raw_content || meeting.content
-    : meeting.processed_content || meeting.content) : null;
+  const content = item ? (viewMode === 'raw'
+    ? (item as any).full_raw_content || item.content
+    : item.processed_content || item.content) : null;
 
   // ✅ תיקון התוכן - החלף text-align: left ב-text-align: right ו-direction: ltr ב-rtl
   const fixedContent = useMemo(() => {
@@ -255,11 +255,11 @@ const MeetingView = () => {
   }, [fixedContent, viewMode]);
 
   const handleCopy = () => {
-    if (!meeting) return;
+    if (!item) return;
 
     let content = viewMode === 'raw'
-      ? (meeting as any).full_raw_content || meeting.content
-      : meeting.processed_content || meeting.content;
+      ? (item as any).full_raw_content || item.content
+      : item.processed_content || item.content;
 
     if (!content) {
       showToast('אין תוכן להעתקה', 'warning');
@@ -350,12 +350,12 @@ ${content}
   // ✅ הסרת עיבוד
   const handleRemoveProcessing = async () => {
     handleCloseContextMenu();
-    if (!meeting || !id) return;
+    if (!item || !id) return;
 
     if (window.confirm('האם אתה בטוח שברצונך להסיר את העיבוד לחלוטין?')) {
       setLoading(true);
       try {
-        const success = await updateMeeting(id, { 
+        const success = await updateItem(id, { 
           processed_content: '', // מחיקת התוכן
           status: 'draft',
           is_processed_manually_updated: false
@@ -363,7 +363,7 @@ ${content}
         
         if (success) {
           // טען מחדש
-          await loadMeeting();
+          await loadItem();
           setViewMode('raw');
           showToast('העיבוד הוסר בהצלחה', 'success');
         }
@@ -379,7 +379,7 @@ ${content}
   // ✅ עריכת עיבוד
   const handleOpenEditDialog = () => {
     handleCloseContextMenu();
-    setEditedProcessedContent(meeting?.processed_content || '');
+    setEditedProcessedContent(item?.processed_content || '');
     setIsEditDialogOpen(true);
   };
 
@@ -390,15 +390,15 @@ ${content}
     
     setIsSaving(true);
     try {
-      const success = await updateMeeting(id, { 
+      const success = await updateItem(id, { 
         processed_content: editedProcessedContent,
         is_processed_manually_updated: true
       });
       
       if (success) {
         // עדכון מקומי מהיר לפני הטעינה מהשרת
-        setMeeting((prev: any) => ({ ...prev, is_processed_manually_updated: true }));
-        await loadMeeting();
+        setItem((prev: any) => ({ ...prev, is_processed_manually_updated: true }));
+        await loadItem();
         setIsEditDialogOpen(false);
       }
     } catch (error) {
@@ -409,13 +409,13 @@ ${content}
   };
 
   if (loading) {
-    return <Loading message="טוען סיכום..." />;
+    return <Loading message="טוען פריט..." />;
   }
 
-  if (!meeting) {
+  if (!item) {
     return (
       <Container>
-        <Typography>הסיכום לא נמצא</Typography>
+        <Typography>הפריט לא נמצא</Typography>
       </Container>
     );
   }
@@ -433,26 +433,26 @@ ${content}
       <Paper elevation={3} sx={{ p: 4 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" component="h1">
-            {meeting.title}
+            {item.title}
           </Typography>
-          <IconButton onClick={() => navigate(`/meetings/${id}/edit`)} color="primary">
+          <IconButton onClick={() => navigate(`/items/${id}/edit`)} color="primary">
             <EditIcon />
           </IconButton>
         </Stack>
 
         <Stack direction="row" spacing={3} mb={2} flexWrap="wrap" alignItems="center">
-          {meeting.clients && (
+          {item.workspaces && (
             <Typography variant="body2" color="text.secondary">
-              <Box component="span" sx={{ fontWeight: 'bold' }}>לקוח:</Box> {meeting.clients.name}
+              <Box component="span" sx={{ fontWeight: 'bold' }}>Workspace:</Box> {item.workspaces.name}
             </Typography>
           )}
-          {meeting.projects && (
+          {item.topics && (
             <Typography variant="body2" color="text.secondary">
-              <Box component="span" sx={{ fontWeight: 'bold' }}>פרויקט:</Box> {meeting.projects.name}
+              <Box component="span" sx={{ fontWeight: 'bold' }}>נושא:</Box> {item.topics.name}
             </Typography>
           )}
           <Typography variant="body2" color="text.secondary">
-            📅 {formatDate(meeting.meeting_date)}
+            📅 {formatDate(item.meeting_date)}
           </Typography>
         </Stack>
 
@@ -473,7 +473,7 @@ ${content}
             <ToggleButton value="raw">גרסת מקור</ToggleButton>
             <ToggleButton 
               value="processed" 
-              disabled={!meeting.processed_content}
+              disabled={!item.processed_content}
               onContextMenu={handleContextMenu}
               sx={{ position: 'relative' }}
             >
@@ -663,17 +663,17 @@ ${content}
 
         <Box mt={4}>
           <Typography variant="caption" color="text.secondary">
-            נוצר: {formatDateTime(meeting.created_at)}
+            נוצר: {formatDateTime(item.created_at)}
           </Typography>
-          {meeting.updated_at && meeting.updated_at !== meeting.created_at && (
+          {item.updated_at && item.updated_at !== item.created_at && (
             <>
               {' • '}
               <Typography variant="caption" color="text.secondary">
-                עודכן: {formatDateTime(meeting.updated_at)}
+                עודכן: {formatDateTime(item.updated_at)}
               </Typography>
             </>
           )}
-          {meeting.is_processed_manually_updated && (
+          {item.is_processed_manually_updated && (
             <>
               {' • '}
               <Typography variant="caption" color="text.secondary">
@@ -687,4 +687,4 @@ ${content}
   );
 };
 
-export default MeetingView;
+export default ItemView;

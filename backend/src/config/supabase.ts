@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 if (!process.env.SUPABASE_URL) {
   throw new Error('Missing SUPABASE_URL environment variable');

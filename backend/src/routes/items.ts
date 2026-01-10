@@ -10,8 +10,8 @@ const buildFullRawContent = (data: {
   title: string;
   meeting_date: string;
   meeting_time?: string;
-  client_name?: string;
-  project_name?: string;
+  workspace_name?: string;
+  topic_name?: string;
   participants?: string[];
   content: string;
   action_items?: Array<{ task: string; assignee: string; due_date?: string }>;
@@ -38,21 +38,21 @@ const buildFullRawContent = (data: {
   }
 };
 
-// ✅ GET /api/meetings - קבלת רשימת סיכומים
+// ✅ GET /api/items - קבלת רשימת פריטים
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { client_id, project_id, status, search, page = 1, limit = 10 } = req.query;
+    const { workspace_id, topic_id, status, search, page = 1, limit = 10 } = req.query;
 
     let query = supabase
-      .from('meetings')
+      .from('items')
       .select(`
         *,
-        clients:client_id (id, name),
-        projects:project_id (id, name)
+        workspaces:workspace_id (id, name),
+        topics:topic_id (id, name)
       `, { count: 'exact' });
 
-    if (client_id) query = query.eq('client_id', client_id);
-    if (project_id) query = query.eq('project_id', project_id);
+    if (workspace_id) query = query.eq('workspace_id', workspace_id);
+    if (topic_id) query = query.eq('topic_id', topic_id);
     if (status) query = query.eq('status', status);
     if (search) {
       query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
@@ -79,23 +79,23 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// ✅ GET /api/meetings/:id - קבלת סיכום בודד
+// ✅ GET /api/items/:id - קבלת פריט בודד
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
     const { data, error } = await supabase
-      .from('meetings')
+      .from('items')
       .select(`
         *,
-        clients:client_id (id, name),
-        projects:project_id (id, name)
+        workspaces:workspace_id (id, name),
+        topics:topic_id (id, name)
       `)
       .eq('id', id)
       .single();
 
     if (error) throw new AppError(error.message, 500);
-    if (!data) throw new AppError('סיכום לא נמצא', 404);
+    if (!data) throw new AppError('פריט לא נמצא', 404);
 
     res.json({ success: true, data });
   } catch (error) {
@@ -103,17 +103,18 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// ✅ POST /api/meetings - יצירת סיכום חדש
+// ✅ POST /api/items - יצירת פריט חדש
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
-      client_id,
-      project_id,
+      workspace_id,
+      topic_id,
       title,
       meeting_date,
       meeting_time,
       participants,
       content,
+      content_type = 'meeting',
       action_items,
       follow_up_required,
       follow_up_date,
@@ -127,18 +128,18 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     // ✅ תיקון: המרת undefined ל-null
-    const cleanClientId = client_id === 'undefined' || client_id === undefined ? null : client_id;
-    const cleanProjectId = project_id === 'undefined' || project_id === undefined ? null : project_id;
+    const cleanWorkspaceId = workspace_id === 'undefined' || workspace_id === undefined ? null : workspace_id;
+    const cleanTopicId = topic_id === 'undefined' || topic_id === undefined ? null : topic_id;
 
-    // ✅ תיקון חדש: שלוף את שם הפרויקט מה-DB
-    let project_name = null;
-    if (cleanProjectId) {
-      const { data: projectData } = await supabase
-        .from('projects')
+    // ✅ תיקון חדש: שלוף את שם הנושא מה-DB
+    let topic_name = null;
+    if (cleanTopicId) {
+      const { data: topicData } = await supabase
+        .from('topics')
         .select('name')
-        .eq('id', cleanProjectId)
+        .eq('id', cleanTopicId)
         .single();
-      project_name = projectData?.name;
+      topic_name = topicData?.name;
     }
 
     // בניית full_raw_content
@@ -146,7 +147,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       title,
       meeting_date,
       meeting_time,
-      project_name, // ← עכשיו זה מגיע מה-DB!
+      topic_name, // ← עכשיו זה מגיע מה-DB!
       participants,
       content,
       action_items,
@@ -157,15 +158,16 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     });
 
     const { data, error } = await supabase
-      .from('meetings')
+      .from('items')
       .insert({
-        client_id: cleanClientId,
-        project_id: cleanProjectId,
+        workspace_id: cleanWorkspaceId,
+        topic_id: cleanTopicId,
         title,
         meeting_date,
         meeting_time,
         participants,
         content,
+        content_type,
         full_raw_content,
         action_items: action_items || [],
         follow_up_required: follow_up_required || false,
@@ -182,37 +184,37 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       throw new AppError(error.message, 500);
     }
 
-    console.log('✅ Meeting created successfully:', data);
+    console.log('✅ Item created successfully:', data);
     res.status(201).json({ success: true, data });
   } catch (error) {
-    console.error('❌ Error in POST /api/meetings:', error);
+    console.error('❌ Error in POST /api/items:', error);
     next(error);
   }
 });
 
-// ✅ PUT /api/meetings/:id - עדכון סיכום
+// ✅ PUT /api/items/:id - עדכון פריט
 router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body };
 
     // ✅ תיקון: המרת undefined ל-null
-    if (updateData.client_id === 'undefined' || updateData.client_id === undefined) {
-      updateData.client_id = null;
+    if (updateData.workspace_id === 'undefined' || updateData.workspace_id === undefined) {
+      updateData.workspace_id = null;
     }
-    if (updateData.project_id === 'undefined' || updateData.project_id === undefined) {
-      updateData.project_id = null;
+    if (updateData.topic_id === 'undefined' || updateData.topic_id === undefined) {
+      updateData.topic_id = null;
     }
 
-    // ✅ תיקון חדש: שלוף את שם הפרויקט מה-DB
-    let project_name = null;
-    if (updateData.project_id) {
-      const { data: projectData } = await supabase
-        .from('projects')
+    // ✅ תיקון חדש: שלוף את שם הנושא מה-DB
+    let topic_name = null;
+    if (updateData.topic_id) {
+      const { data: topicData } = await supabase
+        .from('topics')
         .select('name')
-        .eq('id', updateData.project_id)
+        .eq('id', updateData.topic_id)
         .single();
-      project_name = projectData?.name;
+      topic_name = topicData?.name;
     }
 
     // בניית full_raw_content מחדש
@@ -221,7 +223,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
         title: updateData.title,
         meeting_date: updateData.meeting_date,
         meeting_time: updateData.meeting_time,
-        project_name, // ← עכשיו זה מגיע מה-DB!
+        topic_name, // ← עכשיו זה מגיע מה-DB!
         participants: updateData.participants,
         content: updateData.content,
         action_items: updateData.action_items,
@@ -234,10 +236,10 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
     updateData.updated_at = new Date().toISOString();
 
-    console.log('📝 Updating meeting:', id, 'with data fields:', Object.keys(updateData));
+    console.log('📝 Updating item:', id, 'with data fields:', Object.keys(updateData));
 
     const { data, error } = await supabase
-      .from('meetings')
+      .from('items')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -251,7 +253,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
         console.log('⚠️ is_processed_manually_updated column might be missing, retrying update without it...');
         const { is_processed_manually_updated, ...safeUpdateData } = updateData;
         const { data: retryData, error: retryError } = await supabase
-          .from('meetings')
+          .from('items')
           .update(safeUpdateData)
           .eq('id', id)
           .select()
@@ -272,43 +274,43 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// ✅ DELETE /api/meetings/:id - מחיקת סיכום
+// ✅ DELETE /api/items/:id - מחיקת פריט
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
-    const { error } = await supabase.from('meetings').delete().eq('id', id);
+    const { error } = await supabase.from('items').delete().eq('id', id);
 
     if (error) throw new AppError(error.message, 500);
 
-    res.json({ success: true, message: 'הסיכום נמחק בהצלחה' });
+    res.json({ success: true, message: 'הפריט נמחק בהצלחה' });
   } catch (error) {
     next(error);
   }
 });
 
-// ✅ POST /api/meetings/:id/process - עיבוד AI
+// ✅ POST /api/items/:id/process - עיבוד AI
 router.post('/:id/process', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
-    console.log('🤖 Processing meeting:', id);
+    console.log('🤖 Processing item:', id);
 
-    const { data: meeting, error: fetchError } = await supabase
-      .from('meetings')
+    const { data: item, error: fetchError } = await supabase
+      .from('items')
       .select('*')
       .eq('id', id)
       .single();
 
     if (fetchError) throw new AppError(fetchError.message, 500);
-    if (!meeting) throw new AppError('סיכום לא נמצא', 404);
+    if (!item) throw new AppError('פריט לא נמצא', 404);
 
-    await supabase.from('meetings').update({ status: 'processing' }).eq('id', id);
+    await supabase.from('items').update({ status: 'processing' }).eq('id', id);
 
-    const processedContent = await processMeetingSummary(meeting.full_raw_content || meeting.content);
+    const processedContent = await processMeetingSummary(item.full_raw_content || item.content);
 
     const { data, error } = await supabase
-      .from('meetings')
+      .from('items')
       .update({
         processed_content: processedContent,
         status: 'processed',
@@ -326,7 +328,7 @@ router.post('/:id/process', async (req: Request, res: Response, next: NextFuncti
       // ✅ ניסיון נוסף ללא השדה החדש אם הוא לא קיים ב-DB
       if (error.message.includes('manually_updated') || error.message.includes('column') || error.code === '42703') {
         const { data: retryData, error: retryError } = await supabase
-          .from('meetings')
+          .from('items')
           .update({
             processed_content: processedContent,
             status: 'processed',
@@ -341,35 +343,35 @@ router.post('/:id/process', async (req: Request, res: Response, next: NextFuncti
       throw new AppError(error.message, 500);
     }
 
-    console.log('✅ Meeting processed successfully');
+    console.log('✅ Item processed successfully');
     res.json({ success: true, data });
   } catch (error) {
-    console.error('❌ Error processing meeting:', error);
+    console.error('❌ Error processing item:', error);
     next(error);
   }
 });
 
-// ✅ POST /api/meetings/:id/translate - תרגום
+// ✅ POST /api/items/:id/translate - תרגום
 router.post('/:id/translate', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { language = 'en' } = req.body;
 
-    const { data: meeting, error: fetchError } = await supabase
-      .from('meetings')
+    const { data: item, error: fetchError } = await supabase
+      .from('items')
       .select('*')
       .eq('id', id)
       .single();
 
     if (fetchError) throw new AppError(fetchError.message, 500);
-    if (!meeting) throw new AppError('סיכום לא נמצא', 404);
+    if (!item) throw new AppError('פריט לא נמצא', 404);
 
-    const translatedContent = await translateMeeting(meeting.processed_content || meeting.content, language);
+    const translatedContent = await translateMeeting(item.processed_content || item.content, language);
 
-    const { error: saveError } = await supabase.from('meeting_translations').insert({
-      meeting_id: id,
+    const { error: saveError } = await supabase.from('item_translations').insert({
+      item_id: id,
       language,
-      content: translatedContent,
+      translated_content: translatedContent,
     });
 
     if (saveError) {
@@ -382,24 +384,24 @@ router.post('/:id/translate', async (req: Request, res: Response, next: NextFunc
   }
 });
 
-// ✅ POST /api/meetings/:id/enrich - העשרת תוכן
+// ✅ POST /api/items/:id/enrich - העשרת תוכן
 router.post('/:id/enrich', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
-    const { data: meeting, error: fetchError } = await supabase
-      .from('meetings')
+    const { data: item, error: fetchError } = await supabase
+      .from('items')
       .select('*')
       .eq('id', id)
       .single();
 
     if (fetchError) throw new AppError(fetchError.message, 500);
-    if (!meeting) throw new AppError('סיכום לא נמצא', 404);
+    if (!item) throw new AppError('פריט לא נמצא', 404);
 
-    const enrichedContent = await enrichMeetingContent(meeting.content);
+    const enrichedContent = await enrichMeetingContent(item.content);
 
     const { data, error } = await supabase
-      .from('meetings')
+      .from('items')
       .update({
         content: enrichedContent,
         updated_at: new Date().toISOString(),
@@ -416,15 +418,15 @@ router.post('/:id/enrich', async (req: Request, res: Response, next: NextFunctio
   }
 });
 
-// ✅ GET /api/meetings/:id/versions - גרסאות
+// ✅ GET /api/items/:id/versions - גרסאות
 router.get('/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
     const { data, error } = await supabase
-      .from('meeting_versions')
+      .from('item_versions')
       .select('*')
-      .eq('meeting_id', id)
+      .eq('item_id', id)
       .order('created_at', { ascending: false });
 
     if (error) {

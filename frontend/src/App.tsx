@@ -4,9 +4,9 @@ import { Box, ThemeProvider } from '@mui/material';
 import { ToastProvider } from './hooks/useToast';
 import { theme } from './theme';
 import Layout from './components/Layout/Layout';
-import MeetingsList from './pages/MeetingsList';
-import MeetingEditor from './pages/MeetingEditor';
-import MeetingView from './pages/MeetingView';
+import ItemsList from './pages/ItemsList';
+import ItemEditor from './pages/ItemEditor';
+import ItemView from './pages/ItemView';
 import Settings from './pages/Settings';
 
 function App() {
@@ -15,13 +15,13 @@ function App() {
       <ToastProvider>
         <Layout>
         <Routes>
-          <Route path="/" element={<Navigate to="/meetings" replace />} />
-          <Route path="/meetings" element={<MeetingsList />} />
-          <Route path="/meetings/new" element={<MeetingEditor />} />
-          <Route path="/meetings/:id/edit" element={<MeetingEditor />} />
-          <Route path="/meetings/:id" element={<MeetingView />} />
+          <Route path="/" element={<Navigate to="/items" replace />} />
+          <Route path="/items" element={<ItemsList />} />
+          <Route path="/items/new" element={<ItemEditor />} />
+          <Route path="/items/:id/edit" element={<ItemEditor />} />
+          <Route path="/items/:id" element={<ItemView />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<Navigate to="/meetings" replace />} />
+          <Route path="*" element={<Navigate to="/items" replace />} />
         </Routes>
       </Layout>
     </ToastProvider>

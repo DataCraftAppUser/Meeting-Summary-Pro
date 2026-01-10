@@ -22,6 +22,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  MenuItem,
 } from '@mui/material';
 import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -39,18 +40,18 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { MeetingFormData, Client, Project, ActionItem } from '../../types';
+import { ItemFormData, Workspace, Topic, ActionItem } from '../../types';
 
 // פונקציה פשוטה ליצירת ID זמני
 const generateTempId = () => `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-interface MeetingFormProps {
-  formData: MeetingFormData;
-  onChange: (data: Partial<MeetingFormData>) => void;
-  clients: Client[];
-  projects: Project[];
-  onCreateClient: () => void;
-  onCreateProject: () => void;
+interface ItemFormProps {
+  formData: ItemFormData;
+  onChange: (data: Partial<ItemFormData>) => void;
+  workspaces: Workspace[];
+  topics: Topic[];
+  onCreateWorkspace: () => void;
+  onCreateTopic: () => void;
   loading?: boolean;
 }
 
@@ -65,15 +66,15 @@ const roundToFiveMinutes = (date: Date): Date => {
   return newDate;
 };
 
-export default function MeetingForm({
+export default function ItemForm({
   formData,
   onChange,
-  clients,
-  projects,
-  onCreateClient,
-  onCreateProject,
+  workspaces,
+  topics,
+  onCreateWorkspace,
+  onCreateTopic,
   loading = false,
-}: MeetingFormProps) {
+}: ItemFormProps) {
   // State for Accordion expansion
   const [expandedSections, setExpandedSections] = useState<string[]>(['section1', 'section2']);
 
@@ -117,7 +118,7 @@ export default function MeetingForm({
     setExpandedSections(prev => {
       if (isExpanded) {
         if (section === 'section2') {
-          // צמצם את פרטי הפגישה כשפותחים את התוכן
+          // צמצם את פרטי הפריט כשפותחים את התוכן
           return [...prev.filter(s => s !== 'section1'), section];
         }
         return [...prev, section];
@@ -128,7 +129,7 @@ export default function MeetingForm({
   };
 
   const handleEditorFocus = () => {
-    // צמצם את פרטי הפגישה כשהעורך בפוקוס
+    // צמצם את פרטי הפריט כשהעורך בפוקוס
     setExpandedSections(prev => prev.filter(s => s !== 'section1'));
   };
 
@@ -170,16 +171,16 @@ export default function MeetingForm({
     return date.toTimeString().slice(0, 5);
   };
 
-  // Filter projects by selected client
-  const filteredProjects = formData.client_id
-    ? projects.filter(p => p.client_id === formData.client_id)
-    : projects;
+  // Filter topics by selected workspace
+  const filteredTopics = formData.workspace_id
+    ? topics.filter(t => t.workspace_id === formData.workspace_id)
+    : topics;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={he}>
       <Box>
         {/* ========================================
-            Section 1: פרטי הפגישה
+            Section 1: פרטי הפריט
         ======================================== */}
         <Accordion
           expanded={expandedSections.includes('section1')}
@@ -189,16 +190,16 @@ export default function MeetingForm({
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box display="flex" alignItems="center" gap={1}>
               <DescriptionIcon color="primary" />
-              <Typography variant="h6">פרטי הפגישה</Typography>
+              <Typography variant="h6">פרטי הפריט</Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails>
             <Grid container spacing={2}>
-              {/* כותרת הפגישה */}
+              {/* כותרת הפריט */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="כותרת הפגישה"
+                  label="כותרת הפריט"
                   value={formData.title}
                   onChange={(e) => onChange({ title: e.target.value })}
                   required
@@ -207,6 +208,21 @@ export default function MeetingForm({
                     startAdornment: <DescriptionIcon sx={{ mr: 1, color: 'action.active' }} />,
                   }}
                 />
+              </Grid>
+
+              {/* סוג תוכן */}
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  select
+                  fullWidth
+                  label="סוג תוכן"
+                  value={formData.content_type || 'meeting'}
+                  onChange={(e) => onChange({ content_type: e.target.value as 'meeting' | 'work_log' | 'knowledge' })}
+                >
+                  <MenuItem value="meeting">פגישה</MenuItem>
+                  <MenuItem value="work_log">יומן עבודה</MenuItem>
+                  <MenuItem value="knowledge">ידע</MenuItem>
+                </TextField>
               </Grid>
 
               {/* תאריך */}
@@ -259,22 +275,22 @@ export default function MeetingForm({
                 />
               </Grid>
 
-              {/* לקוח */}
+              {/* Workspace */}
               <Grid item xs={12} sm={6} md={3}>
                 <Autocomplete
-                  options={clients}
+                  options={workspaces}
                   getOptionLabel={(option) => option.name}
-                  value={clients.find((c) => c.id === formData.client_id) || null}
+                  value={workspaces.find((w) => w.id === formData.workspace_id) || null}
                   onChange={(_, value) => {
                     onChange({ 
-                      client_id: value?.id,
-                      project_id: undefined
+                      workspace_id: value?.id,
+                      topic_id: undefined
                     });
                   }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="לקוח"
+                      label="Workspace"
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -290,25 +306,25 @@ export default function MeetingForm({
                 <Button
                   size="small"
                   startIcon={<AddIcon />}
-                  onClick={onCreateClient}
+                  onClick={onCreateWorkspace}
                   sx={{ mt: 0.5 }}
                 >
-                  צור לקוח
+                  צור Workspace
                 </Button>
               </Grid>
 
-              {/* פרויקט */}
+              {/* נושא */}
               <Grid item xs={12} sm={6} md={3}>
                 <Autocomplete
-                  options={filteredProjects}
+                  options={filteredTopics}
                   getOptionLabel={(option) => option.name}
-                  value={filteredProjects.find((p) => p.id === formData.project_id) || null}
-                  onChange={(_, value) => onChange({ project_id: value?.id })}
-                  disabled={!formData.client_id}
+                  value={filteredTopics.find((t) => t.id === formData.topic_id) || null}
+                  onChange={(_, value) => onChange({ topic_id: value?.id })}
+                  disabled={!formData.workspace_id}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="פרויקט"
+                      label="נושא"
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -324,11 +340,11 @@ export default function MeetingForm({
                 <Button
                   size="small"
                   startIcon={<AddIcon />}
-                  onClick={onCreateProject}
-                  disabled={!formData.client_id}
+                  onClick={onCreateTopic}
+                  disabled={!formData.workspace_id}
                   sx={{ mt: 0.5 }}
                 >
-                  צור פרויקט
+                  צור נושא
                 </Button>
               </Grid>
 
@@ -368,7 +384,7 @@ export default function MeetingForm({
         </Accordion>
 
         {/* ========================================
-            Section 2: תוכן הפגישה
+            Section 2: תוכן הפריט
         ======================================== */}
         <Accordion
           expanded={expandedSections.includes('section2')}
@@ -378,7 +394,7 @@ export default function MeetingForm({
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box display="flex" alignItems="center" gap={1}>
               <EditIcon color="primary" />
-              <Typography variant="h6">תוכן הפגישה</Typography>
+              <Typography variant="h6">תוכן הפריט</Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails>
@@ -387,7 +403,7 @@ export default function MeetingForm({
 				value={formData.content || ''}
 				onChange={(value) => onChange({ content: value })}
 				onFocus={handleEditorFocus}
-				placeholder="הזן את תוכן הפגישה..."
+				placeholder="הזן את תוכן הפריט..."
 			  />
 			</Box>
           </AccordionDetails>

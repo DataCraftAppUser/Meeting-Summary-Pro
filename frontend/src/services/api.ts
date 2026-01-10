@@ -1,16 +1,16 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import {
-  Meeting,
-  Client,
-  Project,
-  MeetingVersion,
-  MeetingTranslation,
-  MeetingFormData,
-  ClientFormData,
-  ProjectFormData,
+  Item,
+  Workspace,
+  Topic,
+  ItemVersion,
+  ItemTranslation,
+  ItemFormData,
+  WorkspaceFormData,
+  TopicFormData,
   PaginatedResponse,
-  ProcessMeetingRequest,
-  ProcessMeetingResponse,
+  ProcessItemRequest,
+  ProcessItemResponse,
 } from '../types';
 
 // Remove trailing /api if present, since API calls already include /api
@@ -54,164 +54,141 @@ class ApiService {
     );
   }
 
-  // ==================== MEETINGS ====================
+  // ==================== ITEMS ====================
 
-  async getMeetings(params?: {
+  async getItems(params?: {
     page?: number;
     limit?: number;
     search?: string;
-    client_id?: string;
-    project_id?: string;
+    workspace_id?: string;
+    topic_id?: string;
     status?: string;
-  }): Promise<PaginatedResponse<Meeting>> {
-    const response = await this.api.get('/api/meetings', { params });
+    content_type?: string;
+  }): Promise<PaginatedResponse<Item>> {
+    const response = await this.api.get('/api/items', { params });
     return response.data;
   }
 
-  async getMeeting(id: string): Promise<Meeting> {
-    const response = await this.api.get(`/api/meetings/${id}`);
-    // ✅ תיקון: החזר data.data במקום data
+  async getItem(id: string): Promise<Item> {
+    const response = await this.api.get(`/api/items/${id}`);
     return response.data.data || response.data;
   }
 
-  async createMeeting(data: MeetingFormData): Promise<Meeting> {
-    const response = await this.api.post('/api/meetings', data);
-    // ✅ תיקון: החזר data.data
+  async createItem(data: ItemFormData): Promise<Item> {
+    const response = await this.api.post('/api/items', data);
     return response.data.data || response.data;
   }
 
-  async updateMeeting(id: string, data: Partial<MeetingFormData>): Promise<Meeting> {
-    const response = await this.api.put(`/api/meetings/${id}`, data);
-    // ✅ תיקון: החזר data.data
+  async updateItem(id: string, data: Partial<ItemFormData>): Promise<Item> {
+    const response = await this.api.put(`/api/items/${id}`, data);
     return response.data.data || response.data;
   }
 
-  async patchMeeting(id: string, data: Partial<MeetingFormData>): Promise<Meeting> {
-    const response = await this.api.patch(`/api/meetings/${id}`, data);
-    // ✅ תיקון: החזר data.data
+  async patchItem(id: string, data: Partial<ItemFormData>): Promise<Item> {
+    const response = await this.api.patch(`/api/items/${id}`, data);
     return response.data.data || response.data;
   }
 
-  async deleteMeeting(id: string): Promise<void> {
-    await this.api.delete(`/api/meetings/${id}`);
+  async deleteItem(id: string): Promise<void> {
+    await this.api.delete(`/api/items/${id}`);
   }
 
-  // ==================== CLIENTS ====================
+  // ==================== WORKSPACES ====================
 
-  async getClients(params?: {
+  async getWorkspaces(params?: {
     page?: number;
     limit?: number;
     search?: string;
-  }): Promise<PaginatedResponse<Client>> {
-    const response = await this.api.get('/api/clients', { params });
+  }): Promise<PaginatedResponse<Workspace>> {
+    const response = await this.api.get('/api/workspaces', { params });
     return response.data;
   }
 
-  async getClient(id: string): Promise<Client> {
-    const response = await this.api.get(`/api/clients/${id}`);
+  async getWorkspace(id: string): Promise<Workspace> {
+    const response = await this.api.get(`/api/workspaces/${id}`);
     return response.data.data || response.data;
   }
 
-  async createClient(data: ClientFormData): Promise<Client> {
-    const response = await this.api.post('/api/clients', data);
+  async createWorkspace(data: WorkspaceFormData): Promise<Workspace> {
+    const response = await this.api.post('/api/workspaces', data);
     return response.data.data || response.data;
   }
 
-  async updateClient(id: string, data: Partial<ClientFormData>): Promise<Client> {
-    const response = await this.api.put(`/api/clients/${id}`, data);
+  async updateWorkspace(id: string, data: Partial<WorkspaceFormData>): Promise<Workspace> {
+    const response = await this.api.put(`/api/workspaces/${id}`, data);
     return response.data.data || response.data;
   }
 
-  async deleteClient(id: string): Promise<void> {
-    await this.api.delete(`/api/clients/${id}`);
+  async deleteWorkspace(id: string): Promise<void> {
+    await this.api.delete(`/api/workspaces/${id}`);
   }
 
-  // ==================== PROJECTS ====================
+  // ==================== TOPICS ====================
 
-  async getProjects(params?: {
+  async getTopics(params?: {
     page?: number;
     limit?: number;
     search?: string;
-    client_id?: string;
+    workspace_id?: string;
     status?: string;
-  }): Promise<PaginatedResponse<Project>> {
-    const response = await this.api.get('/api/projects', { params });
+  }): Promise<PaginatedResponse<Topic>> {
+    const response = await this.api.get('/api/topics', { params });
     return response.data;
   }
 
-  async getProject(id: string): Promise<Project> {
-    const response = await this.api.get(`/api/projects/${id}`);
+  async getTopic(id: string): Promise<Topic> {
+    const response = await this.api.get(`/api/topics/${id}`);
     return response.data.data || response.data;
   }
 
-  async createProject(data: ProjectFormData): Promise<Project> {
-    const response = await this.api.post('/api/projects', data);
+  async createTopic(data: TopicFormData): Promise<Topic> {
+    const response = await this.api.post('/api/topics', data);
     return response.data.data || response.data;
   }
 
-  async updateProject(id: string, data: Partial<ProjectFormData>): Promise<Project> {
-    const response = await this.api.put(`/api/projects/${id}`, data);
+  async updateTopic(id: string, data: Partial<TopicFormData>): Promise<Topic> {
+    const response = await this.api.put(`/api/topics/${id}`, data);
     return response.data.data || response.data;
   }
 
-  async deleteProject(id: string): Promise<void> {
-    await this.api.delete(`/api/projects/${id}`);
+  async deleteTopic(id: string): Promise<void> {
+    await this.api.delete(`/api/topics/${id}`);
   }
 
-  // ==================== MEETING VERSIONS ====================
+  // ==================== ITEM VERSIONS ====================
 
-  async getMeetingVersions(meetingId: string): Promise<MeetingVersion[]> {
-    const response = await this.api.get('/api/meeting_versions', {
-      params: { meeting_id: meetingId },
-    });
+  async getItemVersions(itemId: string): Promise<ItemVersion[]> {
+    const response = await this.api.get(`/api/items/${itemId}/versions`);
     return response.data.data || [];
   }
 
-  async createMeetingVersion(meetingId: string, content: string): Promise<MeetingVersion> {
-    const response = await this.api.post('/api/meeting_versions', {
-      meeting_id: meetingId,
-      content,
-    });
-    return response.data.data || response.data;
-  }
+  // ==================== ITEM TRANSLATIONS ====================
 
-  // ==================== MEETING TRANSLATIONS ====================
-
-  async getMeetingTranslations(meetingId: string): Promise<MeetingTranslation[]> {
-    const response = await this.api.get('/api/meeting_translations', {
-      params: { meeting_id: meetingId },
-    });
+  async getItemTranslations(itemId: string): Promise<ItemTranslation[]> {
+    // Note: This endpoint might not exist yet, but keeping for future use
+    const response = await this.api.get(`/api/items/${itemId}/translations`);
     return response.data.data || [];
   }
 
   // ==================== AI PROCESSING ====================
 
-  async processMeeting(request: ProcessMeetingRequest): Promise<ProcessMeetingResponse> {
-    const { meeting_id } = request;
-    const response = await this.api.post(`/api/meetings/${meeting_id}/process`, request);
+  async processItem(itemId: string): Promise<Item> {
+    const response = await this.api.post(`/api/items/${itemId}/process`);
     return response.data.data || response.data;
   }
 
-  async enrichMeeting(meetingId: string, content: string): Promise<string> {
-    const response = await this.api.post(`/api/meetings/${meetingId}/enrich`, {
-      meeting_id: meetingId,
+  async enrichItem(itemId: string, content: string): Promise<Item> {
+    const response = await this.api.post(`/api/items/${itemId}/enrich`, {
       content,
     });
-    return response.data.enriched_content;
+    return response.data.data || response.data;
   }
 
-  async translateMeeting(meetingId: string, language: string = 'en'): Promise<MeetingTranslation> {
-    const response = await this.api.post(`/api/meetings/${meetingId}/translate`, {
+  async translateItem(itemId: string, language: string = 'en'): Promise<ItemTranslation> {
+    const response = await this.api.post(`/api/items/${itemId}/translate`, {
       language,
     });
     return response.data.data || response.data;
-  }
-
-  // ==================== EXPORT ====================
-
-  async exportMeetingHTML(meetingId: string): Promise<string> {
-    const response = await this.api.get(`/api/meetings/${meetingId}/export/html`);
-    return response.data.html;
   }
 
   // ==================== HEALTH CHECK ====================

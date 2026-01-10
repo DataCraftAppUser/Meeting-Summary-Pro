@@ -1,109 +1,109 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useClients } from '../hooks/useClients';
-import { useProjects } from '../hooks/useProjects';
+import { useWorkspaces } from '../hooks/useWorkspaces';
+import { useTopics } from '../hooks/useTopics';
 import Loading from '../components/Common/Loading';
 import ManageEntitiesDialog from '../components/Common/ManageEntitiesDialog';
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { clients, loading: loadingClients, fetchClients, createClient, updateClient, deleteClient } = useClients();
-  const { projects, loading: loadingProjects, fetchProjects, createProject, updateProject, deleteProject } = useProjects();
+  const { workspaces, loading: loadingWorkspaces, fetchWorkspaces, createWorkspace, updateWorkspace, deleteWorkspace } = useWorkspaces();
+  const { topics, loading: loadingTopics, fetchTopics, createTopic, updateTopic, deleteTopic } = useTopics();
 
   const [dialogOpen, setDialogOpen] = useState(true); // נפתח אוטומטית
 
   useEffect(() => {
-    fetchClients();
-    fetchProjects();
+    fetchWorkspaces();
+    fetchTopics();
   }, []);
 
   // Wrapper functions for the dialog
-  const handleClientEdit = async (id: string, name: string): Promise<boolean> => {
+  const handleWorkspaceEdit = async (id: string, name: string): Promise<boolean> => {
     try {
-      await updateClient(id, { name });
-      await fetchClients();
+      await updateWorkspace(id, { name });
+      await fetchWorkspaces();
       return true;
     } catch (error) {
-      console.error('Error updating client:', error);
+      console.error('Error updating workspace:', error);
       return false;
     }
   };
 
-  const handleClientDelete = async (id: string): Promise<boolean> => {
+  const handleWorkspaceDelete = async (id: string): Promise<boolean> => {
     try {
-      await deleteClient(id);
-      await fetchClients();
+      await deleteWorkspace(id);
+      await fetchWorkspaces();
       return true;
     } catch (error) {
-      console.error('Error deleting client:', error);
+      console.error('Error deleting workspace:', error);
       return false;
     }
   };
 
-  const handleClientCreate = async (name: string): Promise<boolean> => {
+  const handleWorkspaceCreate = async (name: string): Promise<boolean> => {
     try {
-      await createClient({ name });
-      await fetchClients();
+      await createWorkspace({ name });
+      await fetchWorkspaces();
       return true;
     } catch (error) {
-      console.error('Error creating client:', error);
+      console.error('Error creating workspace:', error);
       return false;
     }
   };
 
-  const handleProjectEdit = async (id: string, name: string): Promise<boolean> => {
+  const handleTopicEdit = async (id: string, name: string): Promise<boolean> => {
     try {
-      const project = projects.find((p) => p.id === id);
-      if (project) {
-        await updateProject(id, {
+      const topic = topics.find((t) => t.id === id);
+      if (topic) {
+        await updateTopic(id, {
           name,
-          client_id: project.client_id,
-          status: project.status,
+          workspace_id: topic.workspace_id || '',
+          status: topic.status,
         });
-        await fetchProjects();
+        await fetchTopics();
         return true;
       }
       return false;
     } catch (error) {
-      console.error('Error updating project:', error);
+      console.error('Error updating topic:', error);
       return false;
     }
   };
 
-  const handleProjectDelete = async (id: string): Promise<boolean> => {
+  const handleTopicDelete = async (id: string): Promise<boolean> => {
     try {
-      await deleteProject(id);
-      await fetchProjects();
+      await deleteTopic(id);
+      await fetchTopics();
       return true;
     } catch (error) {
-      console.error('Error deleting project:', error);
+      console.error('Error deleting topic:', error);
       return false;
     }
   };
 
-  const handleProjectCreate = async (name: string, clientId: string): Promise<boolean> => {
+  const handleTopicCreate = async (name: string, workspaceId: string): Promise<boolean> => {
     try {
-      await createProject({ name, client_id: clientId, status: 'active' });
-      await fetchProjects();
+      await createTopic({ name, workspace_id: workspaceId, status: 'active' });
+      await fetchTopics();
       return true;
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error('Error creating topic:', error);
       return false;
     }
   };
 
   const handleUpdate = () => {
-    fetchClients();
-    fetchProjects();
+    fetchWorkspaces();
+    fetchTopics();
   };
 
   const handleClose = () => {
     setDialogOpen(false);
-    // חזור לרשימת הפגישות אחרי סגירת ה-Dialog
-    navigate('/meetings');
+    // חזור לרשימת הפריטים אחרי סגירת ה-Dialog
+    navigate('/items');
   };
 
-  if (loadingClients || loadingProjects) {
+  if (loadingWorkspaces || loadingTopics) {
     return <Loading />;
   }
 
@@ -111,14 +111,14 @@ export default function Settings() {
     <ManageEntitiesDialog
       open={dialogOpen}
       onClose={handleClose}
-      clients={clients}
-      projects={projects}
-      onClientEdit={handleClientEdit}
-      onClientDelete={handleClientDelete}
-      onClientCreate={handleClientCreate}
-      onProjectEdit={handleProjectEdit}
-      onProjectDelete={handleProjectDelete}
-      onProjectCreate={handleProjectCreate}
+      workspaces={workspaces}
+      topics={topics}
+      onWorkspaceEdit={handleWorkspaceEdit}
+      onWorkspaceDelete={handleWorkspaceDelete}
+      onWorkspaceCreate={handleWorkspaceCreate}
+      onTopicEdit={handleTopicEdit}
+      onTopicDelete={handleTopicDelete}
+      onTopicCreate={handleTopicCreate}
       onUpdate={handleUpdate}
     />
   );

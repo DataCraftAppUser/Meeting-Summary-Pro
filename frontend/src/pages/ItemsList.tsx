@@ -3,86 +3,86 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Pagination, ToggleButtonGroup, ToggleButton, Container } from '@mui/material';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import { useMeetings } from '../hooks/useMeetings';
-import { useClients } from '../hooks/useClients';
-import { useProjects } from '../hooks/useProjects';
-import MeetingList from '../components/Meetings/MeetingList';
-import MeetingFilters from '../components/Meetings/MeetingFilters';
+import { useItems } from '../hooks/useItems';
+import { useWorkspaces } from '../hooks/useWorkspaces';
+import { useTopics } from '../hooks/useTopics';
+import ItemList from '../components/Items/ItemList';
+import ItemFilters from '../components/Items/ItemFilters';
 import Loading from '../components/Common/Loading';
 import ErrorMessage from '../components/Common/ErrorMessage';
 import ConfirmDialog from '../components/Common/ConfirmDialog';
 
-export default function MeetingsList() {
+export default function ItemsList() {
   const navigate = useNavigate();
   const {
-    meetings,
+    items,
     loading,
     total,
     page,
     setPage,
-    fetchMeetings,
-    deleteMeeting,
-  } = useMeetings();
+    fetchItems,
+    deleteItem,
+  } = useItems();
   
-  const { clients, fetchClients } = useClients();
-  const { projects, fetchProjects } = useProjects();
+  const { workspaces, fetchWorkspaces } = useWorkspaces();
+  const { topics, fetchTopics } = useTopics();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClient, setSelectedClient] = useState('');
-  const [selectedProject, setSelectedProject] = useState('');
+  const [selectedWorkspace, setSelectedWorkspace] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
   // ✨ תצוגת view mode
   const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
-    const saved = localStorage.getItem('meetingsViewMode');
+    const saved = localStorage.getItem('itemsViewMode');
     return (saved as 'grid' | 'table') || 'table';
   });
 
   const handleViewModeChange = (_: any, newMode: 'grid' | 'table' | null) => {
     if (newMode) {
       setViewMode(newMode);
-      localStorage.setItem('meetingsViewMode', newMode);
+      localStorage.setItem('itemsViewMode', newMode);
     }
   };
 
   const loadData = useCallback(async () => {
     try {
       setError(false);
-      await fetchMeetings({
+      await fetchItems({
         search: searchQuery || undefined,
-        client_id: selectedClient || undefined,
-        project_id: selectedProject || undefined,
+        workspace_id: selectedWorkspace || undefined,
+        topic_id: selectedTopic || undefined,
       });
     } catch (err) {
       setError(true);
     }
-  }, [fetchMeetings, searchQuery, selectedClient, selectedProject]);
+  }, [fetchItems, searchQuery, selectedWorkspace, selectedTopic]);
 
   useEffect(() => {
     loadData();
   }, [page, loadData]);
 
   useEffect(() => {
-    fetchClients();
-    fetchProjects();
-  }, [fetchClients, fetchProjects]);
+    fetchWorkspaces();
+    fetchTopics();
+  }, [fetchWorkspaces, fetchTopics]);
 
   const handleDelete = (id: string) => {
-    setMeetingToDelete(id);
+    setItemToDelete(id);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (meetingToDelete) {
-      const success = await deleteMeeting(meetingToDelete);
+    if (itemToDelete) {
+      const success = await deleteItem(itemToDelete);
       if (success) {
         await loadData();
       }
     }
     setDeleteDialogOpen(false);
-    setMeetingToDelete(null);
+    setItemToDelete(null);
   };
 
   const handlePageChange = (_: any, value: number) => {
@@ -123,14 +123,14 @@ export default function MeetingsList() {
               mb: 2,
             }}
           >
-            סיכומי פגישות
+            פריטים
           </Typography>
           <Typography
             variant="h6"
             color="text.secondary"
             sx={{ fontWeight: 400, lineHeight: 1.6 }}
           >
-            נהל את כל סיכומי הפגישות שלך במקום אחד עם AI מתקדם
+            נהל את כל הפריטים שלך במקום אחד עם AI מתקדם
           </Typography>
         </Box>
 
@@ -182,26 +182,26 @@ export default function MeetingsList() {
           border: '1px solid rgba(226, 232, 240, 0.8)',
         }}
       >
-        <MeetingFilters
+        <ItemFilters
           searchQuery={searchQuery}
-          selectedClient={selectedClient}
-          selectedProject={selectedProject}
-          clients={clients}
-          projects={projects}
+          selectedWorkspace={selectedWorkspace}
+          selectedTopic={selectedTopic}
+          workspaces={workspaces}
+          topics={topics}
           onSearchChange={setSearchQuery}
-          onClientChange={setSelectedClient}
-          onProjectChange={setSelectedProject}
+          onWorkspaceChange={setSelectedWorkspace}
+          onTopicChange={setSelectedTopic}
         />
       </Box>
 
       {loading ? (
-        <Loading message="טוען סיכומים..." />
+        <Loading message="טוען פריטים..." />
       ) : (
         <>
-          <MeetingList
-            meetings={meetings}
+          <ItemList
+            items={items}
             onDelete={handleDelete}
-            onNewMeeting={() => navigate('/meetings/new')}
+            onNewItem={() => navigate('/items/new')}
             viewMode={viewMode}
           />
 
@@ -237,8 +237,8 @@ export default function MeetingsList() {
 
       <ConfirmDialog
         open={deleteDialogOpen}
-        title="מחיקת סיכום"
-        message="האם אתה בטוח שברצונך למחוק את הסיכום? פעולה זו אינה ניתנת לביטול."
+        title="מחיקת פריט"
+        message="האם אתה בטוח שברצונך למחוק את הפריט? פעולה זו אינה ניתנת לביטול."
         onConfirm={confirmDelete}
         onCancel={() => setDeleteDialogOpen(false)}
         severity="error"

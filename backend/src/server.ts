@@ -18,9 +18,9 @@ import { supabase } from './config/supabase';
 import { geminiClient } from './config/gemini';
 
 // Routes
-import meetingsRouter from './routes/meetings';
-import clientsRouter from './routes/clients';
-import projectsRouter from './routes/projects';
+import itemsRouter from './routes/items';
+import workspacesRouter from './routes/workspaces';
+import topicsRouter from './routes/topics';
 import aiRouter from './routes/ai';
 
 // Middleware
@@ -111,9 +111,9 @@ app.get('/health', (req: Request, res: Response) => {
 // API ROUTES
 // ================================================================
 
-app.use('/api/meetings', meetingsRouter);
-app.use('/api/clients', clientsRouter);
-app.use('/api/projects', projectsRouter);
+app.use('/api/items', itemsRouter);
+app.use('/api/workspaces', workspacesRouter);
+app.use('/api/topics', topicsRouter);
 app.use('/api/ai', aiRouter);
 
 // Root endpoint
@@ -124,9 +124,9 @@ app.get('/', (req: Request, res: Response) => {
     description: 'Backend API for AI-powered meeting summaries',
     endpoints: {
       health: '/health',
-      meetings: '/api/meetings',
-      clients: '/api/clients',
-      projects: '/api/projects',
+      items: '/api/items',
+      workspaces: '/api/workspaces',
+      topics: '/api/topics',
       ai: '/api/ai',
     },
     docs: 'https://github.com/your-repo/docs',
@@ -152,7 +152,7 @@ async function verifyConnections() {
 
   // Check Supabase
   try {
-    const { data, error } = await supabase.from('clients').select('count').limit(1);
+    const { data, error } = await supabase.from('workspaces').select('count').limit(1);
     if (error) throw error;
     console.log('✅ Connected to Supabase');
   } catch (error: any) {

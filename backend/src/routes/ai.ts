@@ -1,6 +1,6 @@
 /**
  * AI Routes
- * נקודות קצה נפרדות ל-AI (אלטרנטיבה למסלולים שב-meetings)
+ * נקודות קצה נפרדות ל-AI (אלטרנטיבה למסלולים שב-items)
  */
 
 import { Router, Request, Response } from 'express';

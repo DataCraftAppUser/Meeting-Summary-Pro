@@ -35,7 +35,7 @@ export default function Header() {
         <IconButton
           edge="start"
           color="inherit"
-          onClick={() => navigate('/meetings')}
+          onClick={() => navigate('/items')}
           sx={{
             mr: 2,
             borderRadius: 2,
@@ -100,7 +100,7 @@ export default function Header() {
             color: 'text.secondary',
           }}
         >
-          סיכומי פגישות
+          פריטים
         </Typography>
 
         <IconButton
@@ -121,7 +121,7 @@ export default function Header() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/meetings/new')}
+          onClick={() => navigate('/items/new')}
           sx={{
             background: 'linear-gradient(135deg, #38b2ac 0%, #68d391 100%)',
             color: 'white',
@@ -138,7 +138,7 @@ export default function Header() {
             transition: 'all 0.2s ease-in-out',
           }}
         >
-          {isMobile ? 'חדש' : 'סיכום חדש'}
+          {isMobile ? 'חדש' : 'פריט חדש'}
         </Button>
       </Toolbar>
     </AppBar>

@@ -31,33 +31,33 @@ import BusinessIcon from '@mui/icons-material/Business';
 import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { Client, Project } from '../../types';
+import { Workspace, Topic } from '../../types';
 
 interface ManageEntitiesDialogProps {
   open: boolean;
   onClose: () => void;
-  clients: Client[];
-  projects: Project[];
-  onClientEdit: (id: string, name: string) => Promise<boolean>;
-  onClientDelete: (id: string) => Promise<boolean>;
-  onClientCreate: (name: string) => Promise<boolean>;
-  onProjectEdit: (id: string, name: string) => Promise<boolean>;
-  onProjectDelete: (id: string) => Promise<boolean>;
-  onProjectCreate: (name: string, clientId: string) => Promise<boolean>;
+  workspaces: Workspace[];
+  topics: Topic[];
+  onWorkspaceEdit: (id: string, name: string) => Promise<boolean>;
+  onWorkspaceDelete: (id: string) => Promise<boolean>;
+  onWorkspaceCreate: (name: string) => Promise<boolean>;
+  onTopicEdit: (id: string, name: string) => Promise<boolean>;
+  onTopicDelete: (id: string) => Promise<boolean>;
+  onTopicCreate: (name: string, workspaceId: string) => Promise<boolean>;
   onUpdate: () => void;
 }
 
 export default function ManageEntitiesDialog({
   open,
   onClose,
-  clients,
-  projects,
-  onClientEdit,
-  onClientDelete,
-  onClientCreate,
-  onProjectEdit,
-  onProjectDelete,
-  onProjectCreate,
+  workspaces,
+  topics,
+  onWorkspaceEdit,
+  onWorkspaceDelete,
+  onWorkspaceCreate,
+  onTopicEdit,
+  onTopicDelete,
+  onTopicCreate,
   onUpdate,
 }: ManageEntitiesDialogProps) {
   const [tabValue, setTabValue] = useState(0);
@@ -66,19 +66,19 @@ export default function ManageEntitiesDialog({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [newName, setNewName] = useState('');
-  const [selectedClientId, setSelectedClientId] = useState('');
-  const [currentEntity, setCurrentEntity] = useState<Client | Project | null>(null);
-  const [entityType, setEntityType] = useState<'client' | 'project'>('client');
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState('');
+  const [currentEntity, setCurrentEntity] = useState<Workspace | Topic | null>(null);
+  const [entityType, setEntityType] = useState<'workspace' | 'topic'>('workspace');
   const [processing, setProcessing] = useState(false);
 
   // ✏️ פתיחת עריכה inline
-  const handleStartEdit = (entity: Client | Project) => {
+  const handleStartEdit = (entity: Workspace | Topic) => {
     setEditingId(entity.id);
     setEditName(entity.name);
   };
 
   // ✅ שמירת עריכה inline
-  const handleSaveEdit = async (entity: Client | Project, type: 'client' | 'project') => {
+  const handleSaveEdit = async (entity: Workspace | Topic, type: 'workspace' | 'topic') => {
     if (!editName.trim()) {
       setEditingId(null);
       return;
@@ -86,9 +86,9 @@ export default function ManageEntitiesDialog({
 
     setProcessing(true);
     const success =
-      type === 'client'
-        ? await onClientEdit(entity.id, editName.trim())
-        : await onProjectEdit(entity.id, editName.trim());
+      type === 'workspace'
+        ? await onWorkspaceEdit(entity.id, editName.trim())
+        : await onTopicEdit(entity.id, editName.trim());
     setProcessing(false);
 
     if (success) {
@@ -104,7 +104,7 @@ export default function ManageEntitiesDialog({
   };
 
   // 🗑️ פתיחת מחיקה
-  const handleDelete = (entity: Client | Project, type: 'client' | 'project') => {
+  const handleDelete = (entity: Workspace | Topic, type: 'workspace' | 'topic') => {
     setCurrentEntity(entity);
     setEntityType(type);
     setDeleteDialogOpen(true);
@@ -116,9 +116,9 @@ export default function ManageEntitiesDialog({
 
     setProcessing(true);
     const success =
-      entityType === 'client'
-        ? await onClientDelete(currentEntity.id)
-        : await onProjectDelete(currentEntity.id);
+      entityType === 'workspace'
+        ? await onWorkspaceDelete(currentEntity.id)
+        : await onTopicDelete(currentEntity.id);
     setProcessing(false);
 
     if (success) {
@@ -130,7 +130,7 @@ export default function ManageEntitiesDialog({
   // ➕ פתיחת יצירה
   const handleCreate = () => {
     setNewName('');
-    setSelectedClientId(clients.length > 0 ? clients[0].id : '');
+    setSelectedWorkspaceId(workspaces.length > 0 ? workspaces[0].id : '');
     setCreateDialogOpen(true);
   };
 
@@ -141,8 +141,8 @@ export default function ManageEntitiesDialog({
     setProcessing(true);
     const success =
       tabValue === 0
-        ? await onClientCreate(newName.trim())
-        : await onProjectCreate(newName.trim(), selectedClientId);
+        ? await onWorkspaceCreate(newName.trim())
+        : await onTopicCreate(newName.trim(), selectedWorkspaceId);
     setProcessing(false);
 
     if (success) {
@@ -193,7 +193,7 @@ export default function ManageEntitiesDialog({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <BusinessIcon sx={{ fontSize: 28 }} />
             <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-              ניהול לקוחות ופרויקטים
+              ניהול Workspaces ונושאים
             </Typography>
           </Box>
           <IconButton
@@ -241,36 +241,36 @@ export default function ManageEntitiesDialog({
             <Tab
               icon={<BusinessIcon sx={{ mb: 0.5 }} />}
               iconPosition="start"
-              label={`לקוחות (${clients.length})`}
+              label={`Workspaces (${workspaces.length})`}
             />
             <Tab
               icon={<FolderSpecialIcon sx={{ mb: 0.5 }} />}
               iconPosition="start"
-              label={`פרויקטים (${projects.length})`}
+              label={`נושאים (${topics.length})`}
             />
           </Tabs>
         </Box>
 
         {/* תוכן */}
         <DialogContent sx={{ p: 0, maxHeight: '60vh', overflowY: 'auto' }}>
-          {/* טאב לקוחות */}
+          {/* טאב Workspaces */}
           {tabValue === 0 && (
             <Slide direction="left" in={tabValue === 0} mountOnEnter unmountOnExit>
               <Box>
-                {clients.length === 0 ? (
+                {workspaces.length === 0 ? (
                   <Box sx={{ p: 6, textAlign: 'center' }}>
                     <BusinessIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
                     <Typography color="text.secondary" variant="body1">
-                      אין לקוחות עדיין
+                      אין Workspaces עדיין
                     </Typography>
                     <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
-                      לחץ על "לקוח חדש" כדי להתחיל
+                      לחץ על "Workspace חדש" כדי להתחיל
                     </Typography>
                   </Box>
                 ) : (
                   <List sx={{ pt: 0 }}>
-                    {clients.map((client, index) => (
-                      <React.Fragment key={client.id}>
+                    {workspaces.map((workspace, index) => (
+                      <React.Fragment key={workspace.id}>
                         <ListItem
                           sx={{
                             py: 2.5,
@@ -281,7 +281,7 @@ export default function ManageEntitiesDialog({
                             },
                           }}
                         >
-                          {editingId === client.id ? (
+                          {editingId === workspace.id ? (
                             // מצב עריכה
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                               <TextField
@@ -292,7 +292,7 @@ export default function ManageEntitiesDialog({
                                 onChange={(e) => setEditName(e.target.value)}
                                 onKeyPress={(e) => {
                                   if (e.key === 'Enter') {
-                                    handleSaveEdit(client, 'client');
+                                    handleSaveEdit(workspace, 'workspace');
                                   } else if (e.key === 'Escape') {
                                     handleCancelEdit();
                                   }
@@ -305,7 +305,7 @@ export default function ManageEntitiesDialog({
                               />
                               <IconButton
                                 size="small"
-                                onClick={() => handleSaveEdit(client, 'client')}
+                                onClick={() => handleSaveEdit(workspace, 'workspace')}
                                 disabled={processing || !editName.trim()}
                                 sx={{
                                   color: 'success.main',
@@ -337,16 +337,16 @@ export default function ManageEntitiesDialog({
                                     opacity: 0.7,
                                   },
                                 }}
-                                onClick={() => handleStartEdit(client)}
+                                onClick={() => handleStartEdit(workspace)}
                               >
                                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                  {client.name}
+                                  {workspace.name}
                                 </Typography>
                               </Box>
                               <Stack direction="row" spacing={0.5}>
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleStartEdit(client)}
+                                  onClick={() => handleStartEdit(workspace)}
                                   sx={{
                                     color: 'primary.main',
                                     '&:hover': {
@@ -358,7 +358,7 @@ export default function ManageEntitiesDialog({
                                 </IconButton>
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleDelete(client, 'client')}
+                                  onClick={() => handleDelete(workspace, 'workspace')}
                                   sx={{
                                     color: 'error.main',
                                     '&:hover': {
@@ -372,7 +372,7 @@ export default function ManageEntitiesDialog({
                             </>
                           )}
                         </ListItem>
-                        {index < clients.length - 1 && <Divider />}
+                        {index < workspaces.length - 1 && <Divider />}
                       </React.Fragment>
                     ))}
                   </List>
@@ -393,31 +393,31 @@ export default function ManageEntitiesDialog({
                       fontWeight: 500,
                     }}
                   >
-                    לקוח חדש
+                    Workspace חדש
                   </Button>
                 </Box>
               </Box>
             </Slide>
           )}
 
-          {/* טאב פרויקטים */}
+          {/* טאב נושאים */}
           {tabValue === 1 && (
             <Slide direction="right" in={tabValue === 1} mountOnEnter unmountOnExit>
               <Box>
-                {projects.length === 0 ? (
+                {topics.length === 0 ? (
                   <Box sx={{ p: 6, textAlign: 'center' }}>
                     <FolderSpecialIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
                     <Typography color="text.secondary" variant="body1">
-                      אין פרויקטים עדיין
+                      אין נושאים עדיין
                     </Typography>
                     <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
-                      לחץ על "פרויקט חדש" כדי להתחיל
+                      לחץ על "נושא חדש" כדי להתחיל
                     </Typography>
                   </Box>
                 ) : (
                   <List sx={{ pt: 0 }}>
-                    {projects.map((project, index) => (
-                      <React.Fragment key={project.id}>
+                    {topics.map((topic, index) => (
+                      <React.Fragment key={topic.id}>
                         <ListItem
                           sx={{
                             py: 2.5,
@@ -428,7 +428,7 @@ export default function ManageEntitiesDialog({
                             },
                           }}
                         >
-                          {editingId === project.id ? (
+                          {editingId === topic.id ? (
                             // מצב עריכה
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                               <TextField
@@ -439,7 +439,7 @@ export default function ManageEntitiesDialog({
                                 onChange={(e) => setEditName(e.target.value)}
                                 onKeyPress={(e) => {
                                   if (e.key === 'Enter') {
-                                    handleSaveEdit(project, 'project');
+                                    handleSaveEdit(topic, 'topic');
                                   } else if (e.key === 'Escape') {
                                     handleCancelEdit();
                                   }
@@ -452,7 +452,7 @@ export default function ManageEntitiesDialog({
                               />
                               <IconButton
                                 size="small"
-                                onClick={() => handleSaveEdit(project, 'project')}
+                                onClick={() => handleSaveEdit(topic, 'topic')}
                                 disabled={processing || !editName.trim()}
                                 sx={{
                                   color: 'success.main',
@@ -484,14 +484,14 @@ export default function ManageEntitiesDialog({
                                     opacity: 0.7,
                                   },
                                 }}
-                                onClick={() => handleStartEdit(project)}
+                                onClick={() => handleStartEdit(topic)}
                               >
                                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                  {project.name}
+                                  {topic.name}
                                 </Typography>
-                                {project.client && (
+                                {topic.workspaces && (
                                   <Chip
-                                    label={project.client.name}
+                                    label={topic.workspaces.name}
                                     size="small"
                                     sx={{
                                       mt: 0.5,
@@ -506,7 +506,7 @@ export default function ManageEntitiesDialog({
                               <Stack direction="row" spacing={0.5}>
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleStartEdit(project)}
+                                  onClick={() => handleStartEdit(topic)}
                                   sx={{
                                     color: 'primary.main',
                                     '&:hover': {
@@ -518,7 +518,7 @@ export default function ManageEntitiesDialog({
                                 </IconButton>
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleDelete(project, 'project')}
+                                  onClick={() => handleDelete(topic, 'topic')}
                                   sx={{
                                     color: 'error.main',
                                     '&:hover': {
@@ -532,7 +532,7 @@ export default function ManageEntitiesDialog({
                             </>
                           )}
                         </ListItem>
-                        {index < projects.length - 1 && <Divider />}
+                        {index < topics.length - 1 && <Divider />}
                       </React.Fragment>
                     ))}
                   </List>
@@ -553,7 +553,7 @@ export default function ManageEntitiesDialog({
                       fontWeight: 500,
                     }}
                   >
-                    פרויקט חדש
+                    נושא חדש
                   </Button>
                 </Box>
               </Box>
@@ -576,11 +576,11 @@ export default function ManageEntitiesDialog({
         }}
       >
         <DialogTitle sx={{ pb: 1 }}>
-          מחיקת {entityType === 'client' ? 'לקוח' : 'פרויקט'}
+          מחיקת {entityType === 'workspace' ? 'Workspace' : 'נושא'}
         </DialogTitle>
         <DialogContent>
           <Typography>
-            האם אתה בטוח שברצונך למחוק את {entityType === 'client' ? 'הלקוח' : 'הפרויקט'} "
+            האם אתה בטוח שברצונך למחוק את {entityType === 'workspace' ? 'ה-Workspace' : 'הנושא'} "
             {currentEntity?.name}"?
           </Typography>
           <Typography color="error" sx={{ mt: 1, fontSize: '0.9rem' }}>
@@ -614,13 +614,13 @@ export default function ManageEntitiesDialog({
         }}
       >
         <DialogTitle sx={{ pb: 1 }}>
-          {tabValue === 0 ? 'לקוח חדש' : 'פרויקט חדש'}
+          {tabValue === 0 ? 'Workspace חדש' : 'נושא חדש'}
         </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label={tabValue === 0 ? 'שם לקוח' : 'שם פרויקט'}
+            label={tabValue === 0 ? 'שם Workspace' : 'שם נושא'}
             fullWidth
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
@@ -633,15 +633,15 @@ export default function ManageEntitiesDialog({
           />
           {tabValue === 1 && (
             <FormControl fullWidth margin="dense">
-              <InputLabel>לקוח</InputLabel>
+              <InputLabel>Workspace</InputLabel>
               <Select
-                value={selectedClientId}
-                onChange={(e) => setSelectedClientId(e.target.value)}
-                label="לקוח"
+                value={selectedWorkspaceId}
+                onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+                label="Workspace"
               >
-                {clients.map((client) => (
-                  <MenuItem key={client.id} value={client.id}>
-                    {client.name}
+                {workspaces.map((workspace) => (
+                  <MenuItem key={workspace.id} value={workspace.id}>
+                    {workspace.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -653,7 +653,7 @@ export default function ManageEntitiesDialog({
           <Button
             variant="contained"
             onClick={handleSaveCreate}
-            disabled={processing || !newName.trim() || (tabValue === 1 && !selectedClientId)}
+            disabled={processing || !newName.trim() || (tabValue === 1 && !selectedWorkspaceId)}
             sx={{
               backgroundColor: 'primary.main',
               '&:hover': {

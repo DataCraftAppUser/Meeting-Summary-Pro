@@ -9,6 +9,7 @@ import { prefixer } from 'stylis';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import App from './App';
+import apiService from './services/api';
 import './index.css';
 
 // Create RTL cache

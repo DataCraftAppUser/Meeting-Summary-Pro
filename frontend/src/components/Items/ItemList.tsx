@@ -17,24 +17,24 @@ import {
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Meeting } from '../../types';
-import MeetingCard from './MeetingCard';
+import { Item } from '../../types';
+import ItemCard from './ItemCard';
 import EmptyState from '../Common/EmptyState';
 import { formatDate, formatTimeAgo } from '../../utils/dateUtils';
 
-interface MeetingListProps {
-  meetings: Meeting[];
+interface ItemListProps {
+  items: Item[];
   onDelete: (id: string) => void;
-  onNewMeeting?: () => void;
+  onNewItem?: () => void;
   viewMode?: 'grid' | 'table';
 }
 
-export default function MeetingList({
-  meetings,
+export default function ItemList({
+  items,
   onDelete,
-  onNewMeeting,
+  onNewItem,
   viewMode = 'table',
-}: MeetingListProps) {
+}: ItemListProps) {
   const navigate = useNavigate();
 
   const getStatusColor = (status: string) => {
@@ -67,12 +67,12 @@ export default function MeetingList({
     }
   };
 
-  if (meetings.length === 0) {
+  if (items.length === 0) {
     return (
       <EmptyState
-        message="אין סיכומים עדיין"
-        actionLabel="צור סיכום ראשון"
-        onAction={onNewMeeting}
+        message="אין פריטים עדיין"
+        actionLabel="צור פריט ראשון"
+        onAction={onNewItem}
       />
     );
   }
@@ -82,9 +82,9 @@ export default function MeetingList({
     return (
       <Box sx={{ flexGrow: 1 }}>
         <Grid container spacing={3}>
-          {meetings.map((meeting) => (
-            <Grid item xs={12} sm={6} md={4} key={meeting.id}>
-              <MeetingCard meeting={meeting} onDelete={onDelete} />
+          {items.map((item) => (
+            <Grid item xs={12} sm={6} md={4} key={item.id}>
+              <ItemCard item={item} onDelete={onDelete} />
             </Grid>
           ))}
         </Grid>
@@ -117,10 +117,10 @@ export default function MeetingList({
               כותרת
             </TableCell>
             <TableCell align="center" sx={{ fontWeight: 'bold', width: '14%' }}>
-              לקוח
+              Workspace
             </TableCell>
             <TableCell align="center" sx={{ fontWeight: 'bold', width: '14%' }}>
-              פרויקט
+              נושא
             </TableCell>
             <TableCell align="center" sx={{ fontWeight: 'bold', width: '10%' }}>
               סטטוס
@@ -134,9 +134,9 @@ export default function MeetingList({
           </TableRow>
         </TableHead>
         <TableBody>
-          {meetings.map((meeting) => (
+          {items.map((item) => (
             <TableRow
-              key={meeting.id}
+              key={item.id}
               hover
               sx={{
                 cursor: 'pointer',
@@ -147,7 +147,7 @@ export default function MeetingList({
             >
               <TableCell align="right">
                 <Typography variant="body2">
-                  {formatDate(meeting.meeting_date)}
+                  {formatDate(item.meeting_date)}
                 </Typography>
               </TableCell>
               <TableCell 
@@ -175,32 +175,32 @@ export default function MeetingList({
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/meetings/${meeting.id}`);
+                    navigate(`/items/${item.id}`);
                   }}
                 >
-                  {meeting.title}
+                  {item.title}
                 </Typography>
               </TableCell>
               <TableCell align="right">
                 <Typography variant="body2" color="text.secondary">
-                  {(meeting as any).clients?.name || 'לא צוין'}
+                  {(item as any).workspaces?.name || 'לא צוין'}
                 </Typography>
               </TableCell>
               <TableCell align="right">
                 <Typography variant="body2" color="text.secondary">
-                  {(meeting as any).projects?.name || 'לא צוין'}
+                  {(item as any).topics?.name || 'לא צוין'}
                 </Typography>
               </TableCell>
               <TableCell align="center">
                 <Chip
-                  label={getStatusLabel(meeting.status)}
-                  color={getStatusColor(meeting.status) as any}
+                  label={getStatusLabel(item.status)}
+                  color={getStatusColor(item.status) as any}
                   size="small"
                 />
               </TableCell>
               <TableCell align="center">
                 <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
-                  עודכן {formatTimeAgo(meeting.created_at)}
+                  עודכן {formatTimeAgo(item.created_at)}
                 </Typography>
               </TableCell>
               <TableCell align="right">
@@ -209,7 +209,7 @@ export default function MeetingList({
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/meetings/${meeting.id}`);
+                      navigate(`/items/${item.id}`);
                     }}
                     title="צפייה"
                   >
@@ -219,7 +219,7 @@ export default function MeetingList({
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/meetings/${meeting.id}/edit`);
+                      navigate(`/items/${item.id}/edit`);
                     }}
                     title="עריכה"
                   >
@@ -230,7 +230,7 @@ export default function MeetingList({
                     color="error"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDelete(meeting.id);
+                      onDelete(item.id);
                     }}
                     title="מחיקה"
                   >

@@ -1,6 +1,6 @@
 /**
- * Projects Routes
- * ניהול פרויקטים - CRUD
+ * Topics Routes
+ * ניהול נושאים - CRUD
  */
 
 import { Router, Request, Response } from 'express';
@@ -9,16 +9,16 @@ import { AppError, asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
-// GET /api/projects
+// GET /api/topics
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const { client_id, status, search } = req.query;
+    const { workspace_id, status, search } = req.query;
 
-    let query = supabase.from('projects').select('*, clients(id, name)');
+    let query = supabase.from('topics').select('*, workspaces(id, name)');
 
-    if (client_id) {
-      query = query.eq('client_id', client_id);
+    if (workspace_id) {
+      query = query.eq('workspace_id', workspace_id);
     }
 
     if (status) {
@@ -34,37 +34,37 @@ router.get(
     const { data, error } = await query;
 
     if (error) {
-      throw new AppError(`Failed to fetch projects: ${error.message}`, 500);
+      throw new AppError(`Failed to fetch topics: ${error.message}`, 500);
     }
 
     res.json({ success: true, data });
   })
 );
 
-// GET /api/projects/:id
+// GET /api/topics/:id
 router.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const { data, error } = await supabase
-      .from('projects')
-      .select('*, clients(*), meetings(*)')
+      .from('topics')
+      .select('*, workspaces(*), items(*)')
       .eq('id', req.params.id)
       .single();
 
     if (error || !data) {
-      throw new AppError('Project not found', 404);
+      throw new AppError('Topic not found', 404);
     }
 
     res.json({ success: true, data });
   })
 );
 
-// POST /api/projects
+// POST /api/topics
 router.post(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
     const {
-      client_id,
+      workspace_id,
       name,
       description,
       status,
@@ -76,17 +76,17 @@ router.post(
     } = req.body;
 
     if (!name) {
-      throw new AppError('Project name is required', 400);
+      throw new AppError('Topic name is required', 400);
     }
 
-    if (!client_id) {
-      throw new AppError('Client ID is required', 400);
+    if (!workspace_id) {
+      throw new AppError('Workspace ID is required', 400);
     }
 
     const { data, error } = await supabase
-      .from('projects')
+      .from('topics')
       .insert({
-        client_id,
+        workspace_id,
         name,
         description,
         status: status || 'active',
@@ -100,48 +100,48 @@ router.post(
       .single();
 
     if (error) {
-      throw new AppError(`Failed to create project: ${error.message}`, 500);
+      throw new AppError(`Failed to create topic: ${error.message}`, 500);
     }
 
     res.status(201).json({ success: true, data });
   })
 );
 
-// PUT /api/projects/:id
+// PUT /api/topics/:id
 router.put(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const updates = req.body;
 
     const { data, error } = await supabase
-      .from('projects')
+      .from('topics')
       .update(updates)
       .eq('id', req.params.id)
       .select()
       .single();
 
     if (error) {
-      throw new AppError(`Failed to update project: ${error.message}`, 500);
+      throw new AppError(`Failed to update topic: ${error.message}`, 500);
     }
 
     res.json({ success: true, data });
   })
 );
 
-// DELETE /api/projects/:id
+// DELETE /api/topics/:id
 router.delete(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const { error } = await supabase
-      .from('projects')
+      .from('topics')
       .delete()
       .eq('id', req.params.id);
 
     if (error) {
-      throw new AppError(`Failed to delete project: ${error.message}`, 500);
+      throw new AppError(`Failed to delete topic: ${error.message}`, 500);
     }
 
-    res.json({ success: true, message: 'Project deleted' });
+    res.json({ success: true, message: 'Topic deleted' });
   })
 );
 

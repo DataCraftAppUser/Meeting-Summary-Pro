@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
-  CardActions,
   Typography,
-  Button,
   Chip,
   Box,
   IconButton,
@@ -13,16 +11,16 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { Meeting } from '../../types';
+import { Item } from '../../types';
 import { formatDate, formatTimeAgo } from '../../utils/dateUtils';
 import { truncateText, stripHtml } from '../../utils/helpers';
 
-interface MeetingCardProps {
-  meeting: Meeting;
+interface ItemCardProps {
+  item: Item;
   onDelete: (id: string) => void;
 }
 
-export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
+export default function ItemCard({ item, onDelete }: ItemCardProps) {
   const navigate = useNavigate();
 
   const getStatusColor = (status: string) => {
@@ -55,7 +53,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
     }
   };
 
-  const contentPreview = meeting.processed_content || meeting.content;
+  const contentPreview = item.processed_content || item.content;
   const plainText = stripHtml(contentPreview);
 
   return (
@@ -79,9 +77,9 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
           left: 0,
           right: 0,
           height: '4px',
-          background: `linear-gradient(90deg, ${getStatusColor(meeting.status) === 'info' ? '#3182ce' :
-            getStatusColor(meeting.status) === 'success' ? '#38a169' :
-            getStatusColor(meeting.status) === 'default' ? '#4a5568' : '#38b2ac'}, transparent)`,
+          background: `linear-gradient(90deg, ${getStatusColor(item.status) === 'info' ? '#3182ce' :
+            getStatusColor(item.status) === 'success' ? '#38a169' :
+            getStatusColor(item.status) === 'default' ? '#4a5568' : '#38b2ac'}, transparent)`,
         },
       }}
     >
@@ -90,7 +88,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
           <Typography
             variant="h6"
             component="div"
-            onClick={() => navigate(`/meetings/${meeting.id}`)}
+            onClick={() => navigate(`/items/${item.id}`)}
             sx={{
               fontWeight: 600,
               fontSize: '1.125rem',
@@ -103,11 +101,11 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
               },
             }}
           >
-            {meeting.title}
+            {item.title}
           </Typography>
           <Chip
-            label={getStatusLabel(meeting.status)}
-            color={getStatusColor(meeting.status)}
+            label={getStatusLabel(item.status)}
+            color={getStatusColor(item.status)}
             size="small"
             sx={{
               fontWeight: 500,
@@ -139,7 +137,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
                 display: 'inline-block',
               }}
             />
-            {(meeting as any).clients?.name || 'לא צוין'} • {(meeting as any).projects?.name || 'לא צוין'}
+            {(item as any).workspaces?.name || 'לא צוין'} • {(item as any).topics?.name || 'לא צוין'}
           </Typography>
 
           <Typography
@@ -151,7 +149,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
               gap: 1,
             }}
           >
-            📅 {formatDate(meeting.meeting_date)}
+            📅 {formatDate(item.meeting_date)}
           </Typography>
         </Box>
 
@@ -185,7 +183,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
               fontWeight: 500,
             }}
           >
-            עודכן {formatTimeAgo(meeting.updated_at)}
+            עודכן {formatTimeAgo(item.updated_at)}
           </Typography>
           <Box
             sx={{
@@ -203,7 +201,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
               color="primary"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/meetings/${meeting.id}`);
+                navigate(`/items/${item.id}`);
               }}
               sx={{
                 p: 0.5,
@@ -220,7 +218,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
               color="primary"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/meetings/${meeting.id}/edit`);
+                navigate(`/items/${item.id}/edit`);
               }}
               sx={{
                 p: 0.5,
@@ -249,7 +247,7 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
           color="error"
           onClick={(e) => {
             e.stopPropagation();
-            onDelete(meeting.id);
+            onDelete(item.id);
           }}
           sx={{
             borderRadius: 1,

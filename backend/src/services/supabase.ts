@@ -30,7 +30,7 @@ export const supabase: SupabaseClient = createClient(
 // Helper: Test connection
 export const testConnection = async (): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.from('clients').select('count').single();
+    const { data, error } = await supabase.from('workspaces').select('count').single();
     
     if (error) {
       console.error('❌ Supabase connection test failed:', error.message);
@@ -49,7 +49,7 @@ export const testConnection = async (): Promise<boolean> => {
 export interface Database {
   public: {
     Tables: {
-      clients: {
+      workspaces: {
         Row: {
           id: string;
           name: string;
@@ -60,13 +60,13 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['clients']['Row'], 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['clients']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['workspaces']['Row'], 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['workspaces']['Insert']>;
       };
-      projects: {
+      topics: {
         Row: {
           id: string;
-          client_id: string | null;
+          workspace_id: string | null;
           name: string;
           description: string | null;
           status: string;
@@ -78,17 +78,18 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['projects']['Row'], 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['projects']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['topics']['Row'], 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['topics']['Insert']>;
       };
-      meetings: {
+      items: {
         Row: {
           id: string;
-          client_id: string | null;
-          project_id: string | null;
+          workspace_id: string | null;
+          topic_id: string | null;
           title: string;
           meeting_date: string;
           participants: string[];
+          content_type: string;
           content: string;
           processed_content: string | null;
           is_processed_manually_updated: boolean;
@@ -100,8 +101,8 @@ export interface Database {
           updated_at: string;
           last_edited_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['meetings']['Row'], 'id' | 'created_at' | 'updated_at' | 'last_edited_at'>;
-        Update: Partial<Database['public']['Tables']['meetings']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['items']['Row'], 'id' | 'created_at' | 'updated_at' | 'last_edited_at'>;
+        Update: Partial<Database['public']['Tables']['items']['Insert']>;
       };
     };
   };
