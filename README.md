@@ -533,6 +533,7 @@ MIT License - השתמש בחופשיות!
 
 ## 🚀 מוכן להתחיל?
 
+### הרצה מקומית:
 ```bash
 # Clone, Install, Configure, Run!
 git clone <repo>
@@ -541,8 +542,29 @@ cd meeting-summary-app
 # תהנה מהאפליקציה! 🎊
 ```
 
+### פריסה לפרודקשן (Vercel):
+
+**📖 מדריך מפורט:** ראה `VERCEL_DEPLOYMENT.md`
+
+**🚀 התחלה מהירה:**
+```powershell
+# 1. בדוק שהכל מוכן
+.\validate-deployment.ps1
+
+# 2. העלה Backend
+cd backend
+vercel
+
+# 3. העלה Frontend
+cd ..\frontend
+vercel
+```
+
+**📋 Checklist:** ראה `DEPLOYMENT_CHECKLIST.md`
+
 ---
 
 **Built with ❤️ by [Your Name]**  
 **Version:** 1.0.0  
-**Last Updated:** January 2025
+**Last Updated:** January 2026  
+**Ready for Vercel:** ✅
