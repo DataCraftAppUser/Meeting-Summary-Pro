@@ -84,6 +84,7 @@ export interface Meeting {
   follow_up_date?: string;                  // ✨ חדש
   follow_up_time?: string;                  // ✨ חדש
   follow_up_tbd?: boolean;                  // ✨ חדש
+  is_processed_manually_updated?: boolean;  // ✨ חדש
   status: 'draft' | 'final' | 'archived' | 'processing' | 'processed';
   created_at: string;
   updated_at: string;
@@ -106,12 +107,15 @@ export interface MeetingFormData {
   meeting_time?: string;                    // ✨ חדש
   participants?: string[];
   content: string;
+  processed_content?: string;               // ✨ חדש
+  full_raw_content?: string;                // ✨ חדש
   action_items?: ActionItem[];              // ✨ חדש
   follow_up_required?: boolean;             // ✨ חדש
   follow_up_date?: string;                  // ✨ חדש
   follow_up_time?: string;                  // ✨ חדש
   follow_up_tbd?: boolean;                  // ✨ חדש
-  status?: 'draft' | 'final' | 'archived';
+  is_processed_manually_updated?: boolean;  // ✨ חדש
+  status?: 'draft' | 'final' | 'archived' | 'processing' | 'processed';
 }
 
 export interface MeetingVersion {

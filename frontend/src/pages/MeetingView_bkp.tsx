@@ -236,8 +236,8 @@ const MeetingView = () => {
           )}
           <Chip label={formatDate(meeting.meeting_date)} />
           <Chip 
-            label={meeting.status === 'processed' ? 'מעובד' : meeting.status === 'draft' ? 'טיוטה' : 'ארכיון'} 
-            color={meeting.status === 'processed' ? 'success' : 'default'} 
+            label={meeting.status === 'processed' ? 'מעובד' : meeting.status === 'draft' ? 'טיוטה' : 'ארכיון'}
+            color={meeting.status === 'processed' ? 'warning' : 'default'}
           />
         </Stack>
 
@@ -275,9 +275,22 @@ const MeetingView = () => {
           <Stack direction="row" spacing={2}>
             <Button
               variant="contained"
-              startIcon={processing ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}
+              startIcon={processing ? <CircularProgress size={20} sx={{ color: 'error.main' }} /> : <AutoAwesomeIcon />}
               onClick={handleProcess}
               disabled={processing}
+              sx={{
+                bgcolor: 'white',
+                color: 'error.main',
+                border: '1px solid',
+                borderColor: 'error.main',
+                '&:hover': {
+                  bgcolor: 'rgba(229, 62, 62, 0.04)',
+                  borderColor: 'error.dark',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: 'action.disabledBackground',
+                }
+              }}
             >
               {processing ? 'מעבד...' : 'עיבוד AI'}
             </Button>
@@ -296,7 +309,7 @@ const MeetingView = () => {
               startIcon={<ContentCopyIcon />}
               onClick={handleCopy}
             >
-              העתק עם עיצוב מלא
+              העתק
             </Button>
           </Stack>
         </Stack>

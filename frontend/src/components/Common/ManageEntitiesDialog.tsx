@@ -181,7 +181,7 @@ export default function ManageEntitiesDialog({
         {/* כותרת מעוצבת */}
         <DialogTitle
           sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #1a365d 0%, #2d3748 100%)',
             color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
@@ -228,13 +228,13 @@ export default function ManageEntitiesDialog({
                 fontSize: '0.95rem',
                 fontWeight: 500,
                 '&.Mui-selected': {
-                  color: '#667eea',
+                  color: 'primary.main',
                   fontWeight: 600,
                 },
               },
               '& .MuiTabs-indicator': {
                 height: 3,
-                backgroundColor: '#667eea',
+                backgroundColor: 'primary.main',
               },
             }}
           >
@@ -384,9 +384,9 @@ export default function ManageEntitiesDialog({
                     onClick={handleCreate}
                     fullWidth
                     sx={{
-                      backgroundColor: '#667eea',
+                      backgroundColor: 'primary.main',
                       '&:hover': {
-                        backgroundColor: '#5568d3',
+                        backgroundColor: 'primary.dark',
                       },
                       py: 1.5,
                       textTransform: 'none',
@@ -497,8 +497,8 @@ export default function ManageEntitiesDialog({
                                       mt: 0.5,
                                       height: 20,
                                       fontSize: '0.7rem',
-                                      backgroundColor: '#e3f2fd',
-                                      color: '#1976d2',
+                                      backgroundColor: 'secondary.light',
+                                      color: 'secondary.dark',
                                     }}
                                   />
                                 )}
@@ -544,9 +544,9 @@ export default function ManageEntitiesDialog({
                     onClick={handleCreate}
                     fullWidth
                     sx={{
-                      backgroundColor: '#667eea',
+                      backgroundColor: 'primary.main',
                       '&:hover': {
-                        backgroundColor: '#5568d3',
+                        backgroundColor: 'primary.dark',
                       },
                       py: 1.5,
                       textTransform: 'none',
@@ -655,9 +655,9 @@ export default function ManageEntitiesDialog({
             onClick={handleSaveCreate}
             disabled={processing || !newName.trim() || (tabValue === 1 && !selectedClientId)}
             sx={{
-              backgroundColor: '#667eea',
+              backgroundColor: 'primary.main',
               '&:hover': {
-                backgroundColor: '#5568d3',
+                backgroundColor: 'primary.dark',
               },
             }}
           >

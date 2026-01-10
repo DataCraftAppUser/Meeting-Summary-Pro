@@ -40,6 +40,8 @@ export default function MeetingList({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
+        return 'default';
+      case 'processed':
         return 'warning';
       case 'final':
         return 'success';
@@ -54,6 +56,8 @@ export default function MeetingList({
     switch (status) {
       case 'draft':
         return 'טיוטה';
+      case 'processed':
+        return 'מעובד';
       case 'final':
         return 'סופי';
       case 'archived':

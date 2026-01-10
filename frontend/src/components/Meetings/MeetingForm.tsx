@@ -38,6 +38,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { MeetingFormData, Client, Project, ActionItem } from '../../types';
 
 // פונקציה פשוטה ליצירת ID זמני
@@ -53,11 +54,11 @@ interface MeetingFormProps {
   loading?: boolean;
 }
 
-// פונקציה לעיגול שעה לרבע שעה כלפי מטה
-const roundToQuarterHour = (date: Date): Date => {
+// פונקציה לעיגול שעה ל-5 דקות כלפי מטה
+const roundToFiveMinutes = (date: Date): Date => {
   const newDate = new Date(date);
   const minutes = newDate.getMinutes();
-  const roundedMinutes = Math.floor(minutes / 15) * 15;
+  const roundedMinutes = Math.floor(minutes / 5) * 5;
   newDate.setMinutes(roundedMinutes);
   newDate.setSeconds(0);
   newDate.setMilliseconds(0);
@@ -93,7 +94,7 @@ export default function MeetingForm({
   useEffect(() => {
     if (!formData.meeting_time) {
       const now = new Date();
-      const rounded = roundToQuarterHour(now);
+      const rounded = roundToFiveMinutes(now);
       const timeString = rounded.toTimeString().slice(0, 5); // HH:MM
       onChange({ meeting_time: timeString });
     }
@@ -205,6 +206,9 @@ export default function MeetingForm({
                   onChange={(date: Date | null) =>
                     onChange({ meeting_date: date ? date.toISOString().split('T')[0] : '' })
                   }
+                  components={{
+                    OpenPickerIcon: ArrowDropDownIcon
+                  }}
                   renderInput={(params: any) => (
                     <TextField
                       {...params}
@@ -225,8 +229,11 @@ export default function MeetingForm({
                   label="שעה"
                   value={getTimeValue()}
                   onChange={(date: Date | null) => onChange({ meeting_time: formatTimeString(date) })}
-                  minutesStep={15}
+                  minutesStep={5}
                   ampm={false}
+                  components={{
+                    OpenPickerIcon: ArrowDropDownIcon
+                  }}
                   renderInput={(params: any) => (
                     <TextField
                       {...params}
@@ -443,6 +450,9 @@ export default function MeetingForm({
                                     date ? date.toISOString().split('T')[0] : undefined
                                   )
                                 }
+                                components={{
+                                  OpenPickerIcon: ArrowDropDownIcon
+                                }}
                                 renderInput={(params: any) => (
                                   <TextField {...params} fullWidth size="small" />
                                 )}
@@ -506,6 +516,9 @@ export default function MeetingForm({
                           })
                         }
                         disabled={followUpTbd}
+                        components={{
+                          OpenPickerIcon: ArrowDropDownIcon
+                        }}
                         renderInput={(params: any) => (
                           <TextField {...params} fullWidth size="small" />
                         )}
@@ -530,9 +543,12 @@ export default function MeetingForm({
                             follow_up_time: date ? date.toTimeString().slice(0, 5) : undefined,
                           })
                         }
-                        minutesStep={15}
+                        minutesStep={5}
                         ampm={false}
                         disabled={followUpTbd}
+                        components={{
+                          OpenPickerIcon: ArrowDropDownIcon
+                        }}
                         renderInput={(params: any) => (
                           <TextField {...params} fullWidth size="small" />
                         )}

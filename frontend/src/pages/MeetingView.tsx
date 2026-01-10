@@ -13,22 +13,30 @@ import {
   Typography,
   ToggleButton,
   ToggleButtonGroup,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   ContentCopy as ContentCopyIcon,
   Translate as TranslateIcon,
   AutoAwesome as AutoAwesomeIcon,
+  DeleteForever as DeleteForeverIcon,
 } from '@mui/icons-material';
 import { useMeetings } from '../hooks/useMeetings';
 import { useToast } from '../hooks/useToast';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
 import Loading from '../components/Common/Loading';
+import RichTextEditor from '../components/Common/RichTextEditor';
 
 const MeetingView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getMeeting, processMeeting, translateMeeting } = useMeetings();
+  const { getMeeting, processMeeting, translateMeeting, updateMeeting } = useMeetings();
   const { showToast } = useToast();
 
   const [meeting, setMeeting] = useState<any>(null);
@@ -36,6 +44,13 @@ const MeetingView = () => {
   const [processing, setProcessing] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [viewMode, setViewMode] = useState<'raw' | 'processed'>('raw');
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editedProcessedContent, setEditedProcessedContent] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -315,6 +330,84 @@ ${content}
     }
   };
 
+  // ✅ תפריט קונטקסט (לחצן ימני)
+  const handleContextMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6,
+          }
+        : null,
+    );
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  // ✅ הסרת עיבוד
+  const handleRemoveProcessing = async () => {
+    handleCloseContextMenu();
+    if (!meeting || !id) return;
+
+    if (window.confirm('האם אתה בטוח שברצונך להסיר את העיבוד לחלוטין?')) {
+      setLoading(true);
+      try {
+        const success = await updateMeeting(id, { 
+          processed_content: '', // מחיקת התוכן
+          status: 'draft',
+          is_processed_manually_updated: false
+        });
+        
+        if (success) {
+          // טען מחדש
+          await loadMeeting();
+          setViewMode('raw');
+          showToast('העיבוד הוסר בהצלחה', 'success');
+        }
+      } catch (error) {
+        console.error('❌ Error in handleRemoveProcessing:', error);
+        showToast('שגיאה בהסרת העיבוד', 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // ✅ עריכת עיבוד
+  const handleOpenEditDialog = () => {
+    handleCloseContextMenu();
+    setEditedProcessedContent(meeting?.processed_content || '');
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveProcessedContent = async () => {
+    if (!id) return;
+    
+    console.log('💾 Saving edited processed content, length:', editedProcessedContent.length);
+    
+    setIsSaving(true);
+    try {
+      const success = await updateMeeting(id, { 
+        processed_content: editedProcessedContent,
+        is_processed_manually_updated: true
+      });
+      
+      if (success) {
+        // עדכון מקומי מהיר לפני הטעינה מהשרת
+        setMeeting((prev: any) => ({ ...prev, is_processed_manually_updated: true }));
+        await loadMeeting();
+        setIsEditDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('❌ Error saving processed content:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (loading) {
     return <Loading message="טוען סיכום..." />;
   }
@@ -347,27 +440,21 @@ ${content}
           </IconButton>
         </Stack>
 
-        <Stack direction="row" spacing={2} mb={2} flexWrap="wrap">
+        <Stack direction="row" spacing={3} mb={2} flexWrap="wrap" alignItems="center">
           {meeting.clients && (
-            <Chip label={`לקוח: ${meeting.clients.name}`} color="primary" variant="outlined" />
+            <Typography variant="body2" color="text.secondary">
+              <Box component="span" sx={{ fontWeight: 'bold' }}>לקוח:</Box> {meeting.clients.name}
+            </Typography>
           )}
           {meeting.projects && (
-            <Chip label={`פרויקט: ${meeting.projects.name}`} color="secondary" variant="outlined" />
-          )}
-          <Chip label={formatDate(meeting.meeting_date)} />
-          <Chip 
-            label={meeting.status === 'processed' ? 'מעובד' : meeting.status === 'draft' ? 'טיוטה' : 'ארכיון'} 
-            color={meeting.status === 'processed' ? 'success' : 'default'} 
-          />
-        </Stack>
-
-        {meeting.participants && meeting.participants.length > 0 && (
-          <Box mb={2}>
             <Typography variant="body2" color="text.secondary">
-              משתתפים: {meeting.participants.join(', ')}
+              <Box component="span" sx={{ fontWeight: 'bold' }}>פרויקט:</Box> {meeting.projects.name}
             </Typography>
-          </Box>
-        )}
+          )}
+          <Typography variant="body2" color="text.secondary">
+            📅 {formatDate(meeting.meeting_date)}
+          </Typography>
+        </Stack>
 
         <Divider sx={{ my: 3 }} />
 
@@ -384,17 +471,85 @@ ${content}
             size="small"
           >
             <ToggleButton value="raw">גרסה מקורית</ToggleButton>
-            <ToggleButton value="processed" disabled={!meeting.processed_content}>
+            <ToggleButton 
+              value="processed" 
+              disabled={!meeting.processed_content}
+              onContextMenu={handleContextMenu}
+              sx={{ position: 'relative' }}
+            >
               גרסה מעובדת
             </ToggleButton>
           </ToggleButtonGroup>
 
+          {/* Context Menu for Processed Toggle */}
+          <Menu
+            open={contextMenu !== null}
+            onClose={handleCloseContextMenu}
+            anchorReference="anchorPosition"
+            anchorPosition={
+              contextMenu !== null
+                ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+                : undefined
+            }
+          >
+            <MenuItem onClick={handleOpenEditDialog}>
+              <EditIcon sx={{ ml: 1, fontSize: 18 }} />
+              ערוך עיבוד
+            </MenuItem>
+            <MenuItem onClick={handleRemoveProcessing} sx={{ color: 'error.main' }}>
+              <DeleteForeverIcon sx={{ ml: 1, fontSize: 18 }} />
+              הסר עיבוד
+            </MenuItem>
+          </Menu>
+
+          {/* Edit Processed Content Dialog */}
+          <Dialog 
+            open={isEditDialogOpen} 
+            onClose={() => setIsEditDialogOpen(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <DialogTitle>עריכת תוכן מעובד</DialogTitle>
+            <DialogContent dividers>
+              <RichTextEditor
+                value={editedProcessedContent}
+                onChange={(newContent) => {
+                  console.log('✍️ Editor content changed, length:', newContent.length);
+                  setEditedProcessedContent(newContent);
+                }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setIsEditDialogOpen(false)}>ביטול</Button>
+              <Button 
+                onClick={handleSaveProcessedContent} 
+                variant="contained" 
+                disabled={isSaving}
+              >
+                {isSaving ? 'שומר...' : 'שמור שינויים'}
+              </Button>
+            </DialogActions>
+          </Dialog>
+
           <Stack direction="row" spacing={2}>
             <Button
               variant="contained"
-              startIcon={processing ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}
+              startIcon={processing ? <CircularProgress size={20} sx={{ color: 'error.main' }} /> : <AutoAwesomeIcon />}
               onClick={handleProcess}
               disabled={processing}
+              sx={{
+                bgcolor: 'white',
+                color: 'error.main',
+                border: '1px solid',
+                borderColor: 'error.main',
+                '&:hover': {
+                  bgcolor: 'rgba(229, 62, 62, 0.04)',
+                  borderColor: 'error.dark',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: 'action.disabledBackground',
+                }
+              }}
             >
               {processing ? 'מעבד...' : 'עיבוד AI'}
             </Button>
@@ -413,7 +568,7 @@ ${content}
               startIcon={<ContentCopyIcon />}
               onClick={handleCopy}
             >
-              העתק ל-Outlook
+              העתק
             </Button>
           </Stack>
         </Stack>
@@ -514,6 +669,14 @@ ${content}
               {' • '}
               <Typography variant="caption" color="text.secondary">
                 עודכן: {formatDateTime(meeting.updated_at)}
+              </Typography>
+            </>
+          )}
+          {meeting.is_processed_manually_updated && (
+            <>
+              {' • '}
+              <Typography variant="caption" color="text.secondary">
+                גרסה מעובדת עודכנה ידנית
               </Typography>
             </>
           )}

@@ -91,6 +91,7 @@ export interface Database {
           participants: string[];
           content: string;
           processed_content: string | null;
+          is_processed_manually_updated: boolean;
           status: string;
           duration_minutes: number | null;
           meeting_location: string | null;

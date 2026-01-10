@@ -234,6 +234,8 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
     updateData.updated_at = new Date().toISOString();
 
+    console.log('📝 Updating meeting:', id, 'with data fields:', Object.keys(updateData));
+
     const { data, error } = await supabase
       .from('meetings')
       .update(updateData)
@@ -241,7 +243,28 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
       .select()
       .single();
 
-    if (error) throw new AppError(error.message, 500);
+    if (error) {
+      console.error('❌ Supabase update error:', error);
+      
+      // ✅ ניסיון נוסף ללא השדה החדש אם הוא לא קיים ב-DB
+      if (error.message.includes('manually_updated') || error.message.includes('column') || error.code === '42703') {
+        console.log('⚠️ is_processed_manually_updated column might be missing, retrying update without it...');
+        const { is_processed_manually_updated, ...safeUpdateData } = updateData;
+        const { data: retryData, error: retryError } = await supabase
+          .from('meetings')
+          .update(safeUpdateData)
+          .eq('id', id)
+          .select()
+          .single();
+          
+        if (!retryError) {
+          return res.json({ success: true, data: retryData });
+        }
+        console.error('❌ Retry also failed:', retryError);
+      }
+      
+      throw new AppError(error.message, 500);
+    }
 
     res.json({ success: true, data });
   } catch (error) {
@@ -289,13 +312,32 @@ router.post('/:id/process', async (req: Request, res: Response, next: NextFuncti
       .update({
         processed_content: processedContent,
         status: 'processed',
+        is_processed_manually_updated: false,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw new AppError(error.message, 500);
+    if (error) {
+      console.error('❌ Supabase update error in process route:', error);
+      // ✅ ניסיון נוסף ללא השדה החדש אם הוא לא קיים ב-DB
+      if (error.message.includes('manually_updated') || error.message.includes('column') || error.code === '42703') {
+        const { data: retryData, error: retryError } = await supabase
+          .from('meetings')
+          .update({
+            processed_content: processedContent,
+            status: 'processed',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id)
+          .select()
+          .single();
+          
+        if (!retryError) return res.json({ success: true, data: retryData });
+      }
+      throw new AppError(error.message, 500);
+    }
 
     console.log('✅ Meeting processed successfully');
     res.json({ success: true, data });

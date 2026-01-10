@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS meetings (
   -- Content
   content TEXT NOT NULL, -- Original raw content
   processed_content TEXT, -- AI-processed HTML content
+  is_processed_manually_updated BOOLEAN DEFAULT false, -- ✨ חדש: האם העיבוד עודכן ידנית
   
   -- Status
   status VARCHAR(50) DEFAULT 'draft' CHECK (status IN ('draft', 'processing', 'processed', 'final')),

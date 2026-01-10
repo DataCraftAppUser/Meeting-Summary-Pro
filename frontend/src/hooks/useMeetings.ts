@@ -80,15 +80,20 @@ export function useMeetings() {
     async (id: string, data: Partial<MeetingFormData>): Promise<Meeting | null> => {
       setLoading(true);
       try {
-        const response = await api.updateMeeting(id, data);
-        
-        // ✅ תיקון: החזר את data ישירות
-        const meeting = (response as any)?.data || response;
-        
+        const meeting = await api.updateMeeting(id, data);
         showToast('סיכום עודכן בהצלחה', 'success');
         return meeting;
       } catch (error: any) {
-        showToast('שגיאה בעדכון סיכום', 'error');
+        let errorMessage = 'שגיאה בעדכון סיכום';
+        if (error.response?.data?.error) {
+          errorMessage = typeof error.response.data.error === 'string' 
+            ? error.response.data.error 
+            : error.response.data.error.message || JSON.stringify(error.response.data.error);
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        showToast(errorMessage, 'error');
         console.error('Error updating meeting:', error);
         return null;
       } finally {

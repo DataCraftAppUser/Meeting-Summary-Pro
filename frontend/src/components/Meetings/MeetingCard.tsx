@@ -28,6 +28,8 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
+        return 'default';
+      case 'processed':
         return 'warning';
       case 'final':
         return 'success';
@@ -42,6 +44,8 @@ export default function MeetingCard({ meeting, onDelete }: MeetingCardProps) {
     switch (status) {
       case 'draft':
         return 'טיוטה';
+      case 'processed':
+        return 'מעובד';
       case 'final':
         return 'סופי';
       case 'archived':
