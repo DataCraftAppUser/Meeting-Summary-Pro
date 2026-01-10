@@ -558,7 +558,8 @@ ${content}
               variant="outlined"
               startIcon={translating ? <CircularProgress size={20} /> : <TranslateIcon />}
               onClick={handleTranslate}
-              disabled={translating || !meeting.processed_content}
+              disabled={true} // מנוטרל זמנית - הפונקציונליות עדיין לא עובדת
+              title="האפשרות תהיה זמינה בקרוב"
             >
               {translating ? 'מתרגם...' : 'תרגום'}
             </Button>
