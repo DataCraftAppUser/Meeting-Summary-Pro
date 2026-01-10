@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -36,6 +36,7 @@ const MeetingView = () => {
   const [processing, setProcessing] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [viewMode, setViewMode] = useState<'raw' | 'processed'>('raw');
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadMeeting();
@@ -130,6 +131,114 @@ const MeetingView = () => {
     }
   };
 
+  // ✅ חישוב התוכן ל-useMemo
+  const content = meeting ? (viewMode === 'raw'
+    ? (meeting as any).full_raw_content || meeting.content
+    : meeting.processed_content || meeting.content) : null;
+
+  // ✅ תיקון התוכן - החלף text-align: left ב-text-align: right ו-direction: ltr ב-rtl
+  const fixedContent = useMemo(() => {
+    if (!content) return null;
+    
+    let fixed = content;
+    
+    // תיקון inline styles - החלף text-align: left/center ב-text-align: right
+    fixed = fixed.replace(/text-align:\s*(left|center)/gi, 'text-align: right');
+    fixed = fixed.replace(/direction:\s*ltr/gi, 'direction: rtl');
+    
+    // תיקון align attributes - החלף align="left" או align="center" ב-align="right"
+    fixed = fixed.replace(/align\s*=\s*["'](left|center)["']/gi, 'align="right"');
+    
+    // תיקון dir attributes - החלף dir="ltr" ב-dir="rtl"
+    fixed = fixed.replace(/dir\s*=\s*["']ltr["']/gi, 'dir="rtl"');
+    
+    // הוסף dir="rtl" לכל div שאין לו
+    fixed = fixed.replace(/<div([^>]*?)(?:\s+dir\s*=\s*["'][^"']*["'])?([^>]*)>/gi, (match: string) => {
+      if (!match.includes('dir=')) {
+        // הוסף dir="rtl" אם אין
+        const styleMatch = match.match(/style\s*=\s*["']([^"']*)["']/);
+        if (styleMatch) {
+          // יש style - הוסף text-align: right; direction: rtl אם אין
+          let styles = styleMatch[1];
+          if (!styles.includes('text-align')) {
+            styles += '; text-align: right';
+          } else {
+            styles = styles.replace(/text-align:\s*[^;]+/gi, 'text-align: right');
+          }
+          if (!styles.includes('direction')) {
+            styles += '; direction: rtl';
+          } else {
+            styles = styles.replace(/direction:\s*[^;]+/gi, 'direction: rtl');
+          }
+          return match.replace(/style\s*=\s*["'][^"']*["']/, `style="${styles}"`).replace(/<div/, '<div dir="rtl"');
+        } else {
+          // אין style - הוסף dir="rtl" ו-style
+          return match.replace(/<div/, '<div dir="rtl" style="text-align: right; direction: rtl;"');
+        }
+      }
+      return match;
+    });
+    
+    // הוסף dir="rtl" לכל p שאין לו
+    fixed = fixed.replace(/<p([^>]*?)(?:\s+dir\s*=\s*["'][^"']*["'])?([^>]*)>/gi, (match: string) => {
+      if (!match.includes('dir=')) {
+        const styleMatch = match.match(/style\s*=\s*["']([^"']*)["']/);
+        if (styleMatch) {
+          let styles = styleMatch[1];
+          if (!styles.includes('text-align')) {
+            styles += '; text-align: right';
+          } else {
+            styles = styles.replace(/text-align:\s*[^;]+/gi, 'text-align: right');
+          }
+          if (!styles.includes('direction')) {
+            styles += '; direction: rtl';
+          } else {
+            styles = styles.replace(/direction:\s*[^;]+/gi, 'direction: rtl');
+          }
+          return match.replace(/style\s*=\s*["'][^"']*["']/, `style="${styles}"`).replace(/<p/, '<p dir="rtl"');
+        } else {
+          return match.replace(/<p/, '<p dir="rtl" style="text-align: right; direction: rtl;"');
+        }
+      }
+      return match;
+    });
+    
+    return fixed;
+  }, [content, viewMode]);
+
+  // ✅ תיקון אוטומטי של התוכן אחרי שהוא נטען
+  useEffect(() => {
+    if (!fixedContent) return;
+    
+    // השתמש ב-setTimeout כדי לוודא שה-HTML כבר נטען ב-DOM
+    const timer = setTimeout(() => {
+      if (contentRef.current) {
+        const contentElement = contentRef.current;
+        // מצא את כל האלמנטים בתוכן ותקן אותם
+        const allElements = contentElement.querySelectorAll('*');
+        allElements.forEach((el: Element) => {
+          const htmlEl = el as HTMLElement;
+          // תקן direction
+          htmlEl.style.setProperty('direction', 'rtl', 'important');
+          htmlEl.style.setProperty('text-align', 'right', 'important');
+          // תקן align attribute
+          if (htmlEl.hasAttribute('align')) {
+            htmlEl.setAttribute('align', 'right');
+          }
+          // תקן dir attribute
+          htmlEl.setAttribute('dir', 'rtl');
+        });
+        
+        // תקן את ה-container עצמו
+        contentElement.style.setProperty('direction', 'rtl', 'important');
+        contentElement.style.setProperty('text-align', 'right', 'important');
+        contentElement.setAttribute('dir', 'rtl');
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [fixedContent, viewMode]);
+
   const handleCopy = () => {
     if (!meeting) return;
 
@@ -218,9 +327,6 @@ ${content}
     );
   }
 
-  const content = viewMode === 'raw'
-    ? (meeting as any).full_raw_content || meeting.content
-    : meeting.processed_content || meeting.content;
 
   console.log('🎨 Rendering content:', {
     viewMode,
@@ -312,8 +418,9 @@ ${content}
           </Stack>
         </Stack>
 
-        {content ? (
+        {fixedContent ? (
           <Box
+            ref={contentRef}
             sx={{
               mt: 3,
               p: 3,
@@ -322,8 +429,60 @@ ${content}
               border: '1px solid',
               borderColor: 'divider',
               minHeight: '300px',
+              direction: 'rtl !important',
+              textAlign: 'right !important',
+              '& > *': {
+                direction: 'rtl !important',
+                textAlign: 'right !important',
+              },
+              '& *': {
+                direction: 'rtl !important',
+                textAlign: 'right !important',
+                '&[style*="text-align"]': {
+                  textAlign: 'right !important',
+                },
+                '&[style*="direction"]': {
+                  direction: 'rtl !important',
+                },
+                '&[align]': {
+                  textAlign: 'right !important',
+                },
+              },
+              '& ul, & ol': {
+                paddingRight: '40px !important',
+                paddingLeft: '0 !important',
+                marginRight: '0 !important',
+                marginLeft: '0 !important',
+                textAlign: 'right !important',
+                direction: 'rtl !important',
+              },
+              '& li': {
+                textAlign: 'right !important',
+                direction: 'rtl !important',
+                marginRight: '0 !important',
+                marginLeft: '0 !important',
+              },
+              '& p': {
+                margin: '0 0 12px 0',
+                textAlign: 'right !important',
+                direction: 'rtl !important',
+              },
+              '& div': {
+                textAlign: 'right !important',
+                direction: 'rtl !important',
+              },
+              '& h1, & h2, & h3, & h4, & h5, & h6': {
+                textAlign: 'right !important',
+                direction: 'rtl !important',
+              },
+              '& div[style*="white-space: pre-wrap"]': {
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word',
+                textAlign: 'right !important',
+                direction: 'rtl !important',
+              },
             }}
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={{ __html: fixedContent }}
           />
         ) : (
           <Box

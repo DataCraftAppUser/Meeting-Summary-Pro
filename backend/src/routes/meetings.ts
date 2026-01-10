@@ -25,71 +25,17 @@ const buildFullRawContent = (data: {
     return date.toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  let html = `<div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.8; direction: rtl; text-align: right;">`;
-  
-  // כותרת
-  html += `<h2 style="text-align: right; direction: rtl; margin-bottom: 20px;">${data.title}</h2>`;
-  
-  // פרויקט (אם קיים)
-  if (data.project_name) {
-    html += `<p style="text-align: right; direction: rtl; margin: 10px 0;"><strong>פרויקט:</strong> ${data.project_name}</p>`;
+  // ✅ רק התוכן המקורי - ללא מטא-דאטה (תאריך, משתתפים, פרויקט, action_items, follow_up)
+  // תוכן הפגישה - שמור על HTML המקורי אם הוא קיים
+  // אם התוכן כבר HTML (מכיל תגיות), עטוף אותו ב-div עם direction: rtl
+  // אחרת, עטוף אותו ב-div עם white-space: pre-wrap
+  if (data.content && data.content.trim().startsWith('<')) {
+    // התוכן הוא HTML - עטוף אותו ב-div עם direction: rtl כדי לשמור על יישור ימין
+    return `<div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.8; direction: rtl; text-align: right;"><div dir="rtl" style="text-align: right; direction: rtl;">${data.content}</div></div>`;
+  } else {
+    // התוכן הוא טקסט פשוט - עטוף אותו
+    return `<div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.8; direction: rtl; text-align: right;"><div style="text-align: right; direction: rtl; white-space: pre-wrap;">${data.content}</div></div>`;
   }
-  
-  // תאריך + שעה
-  const dateText = formatDate(data.meeting_date);
-  const timeText = data.meeting_time ? ` | ${data.meeting_time}` : '';
-  html += `<p style="text-align: right; direction: rtl; margin: 10px 0;"><strong>תאריך:</strong> ${dateText}${timeText}</p>`;
-  
-  // משתתפים
-  if (data.participants && data.participants.length > 0) {
-    html += `<p style="text-align: right; direction: rtl; margin: 10px 0;"><strong>משתתפים:</strong> ${data.participants.join(', ')}</p>`;
-  }
-  
-  // קו מפריד
-  html += `<hr style="margin: 20px 0; border: none; border-top: 1px solid #ccc;">`;
-  
-  // תוכן הפגישה
-  html += `<div style="text-align: right; direction: rtl; white-space: pre-wrap;">${data.content}</div>`;
-  
-  // משימות להמשך
-  if (data.action_items && data.action_items.length > 0) {
-    html += `<hr style="margin: 20px 0; border: none; border-top: 1px solid #ccc;">`;
-    html += `<h3 style="text-align: right; direction: rtl; margin-top: 20px;">משימות להמשך:</h3>`;
-    html += `<table style="width: 100%; border-collapse: collapse; direction: rtl; text-align: right;">`;
-    html += `<thead><tr style="background-color: #f0f0f0;">`;
-    html += `<th style="padding: 8px; border: 1px solid #ddd; text-align: right;">משימה</th>`;
-    html += `<th style="padding: 8px; border: 1px solid #ddd; text-align: right;">מבצע</th>`;
-    html += `<th style="padding: 8px; border: 1px solid #ddd; text-align: right;">תאריך יעד</th>`;
-    html += `</tr></thead><tbody>`;
-    
-    data.action_items.forEach(item => {
-      const dueDate = item.due_date ? formatDate(item.due_date) : '-';
-      html += `<tr>`;
-      html += `<td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${item.task}</td>`;
-      html += `<td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${item.assignee}</td>`;
-      html += `<td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${dueDate}</td>`;
-      html += `</tr>`;
-    });
-    
-    html += `</tbody></table>`;
-  }
-  
-  // פגישת Follow Up
-  if (data.follow_up_required) {
-    html += `<hr style="margin: 20px 0; border: none; border-top: 1px solid #ccc;">`;
-    html += `<h3 style="text-align: right; direction: rtl; margin-top: 20px;">פגישת המשך:</h3>`;
-    
-    if (data.follow_up_tbd) {
-      html += `<p style="text-align: right; direction: rtl;">יקבע בהמשך</p>`;
-    } else {
-      const followUpDate = data.follow_up_date ? formatDate(data.follow_up_date) : '';
-      const followUpTime = data.follow_up_time ? ` | ${data.follow_up_time}` : '';
-      html += `<p style="text-align: right; direction: rtl;"><strong>תאריך:</strong> ${followUpDate}${followUpTime}</p>`;
-    }
-  }
-  
-  html += `</div>`;
-  return html;
 };
 
 // ✅ GET /api/meetings - קבלת רשימת סיכומים

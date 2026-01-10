@@ -112,15 +112,43 @@ const MeetingEditor: React.FC = () => {
           console.log('✅ Meeting data:', meeting);
           
           if (meeting && meeting.id) {
-            // ✅ נקה HTML tags מהתוכן אך שמור על פורמט
-            let cleanContent = meeting.content || '';
+            // ✅ שמור על HTML המקורי מהעורך - אל תמיר לטקסט
+            let contentToEdit = meeting.content || '';
             
-            // ✅ אם יש full_raw_content, השתמש בו (טקסט מקורי ללא HTML)
+            // ✅ אם יש full_raw_content, נסה לחלץ את התוכן המקורי מתוכו
+            // full_raw_content מכיל את כל ה-HTML עם המטא-דאטה, אבל אנחנו רוצים רק את התוכן
             if (meeting.full_raw_content) {
-              cleanContent = cleanHTMLToText(meeting.full_raw_content);
-            } else if (meeting.content && meeting.content.includes('<')) {
-              // אם אין full_raw_content אבל יש HTML ב-content, נקה אותו
-              cleanContent = cleanHTMLToText(meeting.content);
+              // נסה למצוא את התוכן המקורי מתוך full_raw_content
+              // התוכן נמצא אחרי ה-<hr> הראשון, בתוך <div> עם white-space: pre-wrap
+              const hrMatch = meeting.full_raw_content.indexOf('<hr');
+              if (hrMatch !== -1) {
+                // קח את החלק אחרי ה-<hr>
+                const afterHr = meeting.full_raw_content.substring(hrMatch);
+                // מצא את ה-<div> הראשון עם התוכן (לפני action_items או follow_up)
+                const contentDivMatch = afterHr.match(/<div[^>]*style="[^"]*white-space:\s*pre-wrap[^"]*"[^>]*>(.*?)<\/div>/s);
+                if (contentDivMatch && contentDivMatch[1]) {
+                  contentToEdit = contentDivMatch[1].trim();
+                } else {
+                  // נסה למצוא את התוכן בין <hr> ל-<hr> הבא או ל-</div> הסוגר
+                  const nextHr = afterHr.indexOf('<hr', 10); // התחל מחיפוש אחרי ה-<hr> הראשון
+                  const closingDiv = afterHr.indexOf('</div>');
+                  const endIndex = nextHr !== -1 ? nextHr : closingDiv;
+                  
+                  if (endIndex !== -1) {
+                    const contentSection = afterHr.substring(0, endIndex);
+                    // הסר את ה-<div> wrapper אבל שמור על התוכן הפנימי
+                    contentToEdit = contentSection
+                      .replace(/^[^<]*<div[^>]*>/, '')
+                      .replace(/<\/div>.*$/, '')
+                      .trim();
+                  }
+                }
+              }
+            }
+            
+            // ✅ אם עדיין אין תוכן, השתמש ב-content המקורי
+            if (!contentToEdit && meeting.content) {
+              contentToEdit = meeting.content;
             }
             
             setFormData({
@@ -130,7 +158,7 @@ const MeetingEditor: React.FC = () => {
               meeting_date: meeting.meeting_date || new Date().toISOString().split('T')[0],
               meeting_time: meeting.meeting_time || undefined,
               participants: meeting.participants || [],
-              content: cleanContent.trim(),  // ✅ טקסט נקי עם פורמט
+              content: contentToEdit,  // ✅ HTML או טקסט - שמור כמו שהוא
               action_items: meeting.action_items || [],
               follow_up_required: meeting.follow_up_required || false,
               follow_up_date: meeting.follow_up_date || undefined,
@@ -142,7 +170,7 @@ const MeetingEditor: React.FC = () => {
             });
             
             console.log('✅ Form data set successfully');
-            console.log('📄 Clean content length:', cleanContent.trim().length);
+            console.log('📄 Content length:', contentToEdit.trim().length);
           } else {
             console.warn('⚠️ Meeting data is invalid:', meeting);
             showToast('לא נמצא סיכום לעריכה', 'error');
