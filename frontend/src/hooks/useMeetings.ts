@@ -124,25 +124,16 @@ export function useMeetings() {
   const processMeeting = useCallback(
     async (meetingId: string, content: string): Promise<Meeting | null> => {
       try {
-        const response = await fetch(`http://localhost:5000/api/meetings/${meetingId}/process`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({}),
+        const result = await api.processMeeting({
+          meeting_id: meetingId,
+          content,
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        
         // ✅ תיקון: החזר את data מהתשובה
         console.log('✅ processMeeting result:', result);
-        const meeting = result.data || result;
+        const meeting = (result as any).data || result;
         console.log('✅ Extracted meeting:', meeting);
-        
+
         return meeting;
       } catch (error: any) {
         showToast('שגיאה בעיבוד סיכום', 'error');
@@ -156,23 +147,11 @@ export function useMeetings() {
   const translateMeeting = useCallback(
     async (meetingId: string, language: string = 'en') => {
       try {
-        const response = await fetch(`http://localhost:5000/api/meetings/${meetingId}/translate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ language }),
-        });
+        const result = await api.translateMeeting(meetingId, language);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        
         // ✅ תיקון: החזר את data
         console.log('✅ translateMeeting result:', result);
-        return result.data || result;
+        return (result as any).data || result;
       } catch (error: any) {
         showToast('שגיאה בתרגום', 'error');
         console.error('Error translating meeting:', error);
