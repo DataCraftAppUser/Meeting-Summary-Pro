@@ -167,8 +167,9 @@ async function verifyConnections() {
     }
     
     // Try a simple generation to verify the key and model
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Using import from geminiClient instead of direct class to avoid TS issues
+    const { geminiClient } = require('./config/gemini');
+    const model = geminiClient.getGenerativeModel({ model: 'gemini-2.5-flash' });
     await model.generateContent('test');
     
     console.log('✅ Gemini API ready and verified');

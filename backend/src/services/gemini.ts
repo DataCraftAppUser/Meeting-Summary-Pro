@@ -14,7 +14,25 @@ if (!process.env.GEMINI_API_KEY) {
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+/**
+ * Get the best available model
+ */
+async function getModel() {
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  for (const modelName of models) {
+    try {
+      const m = genAI.getGenerativeModel({ model: modelName });
+      // Test the model with a tiny prompt
+      await m.generateContent('t');
+      console.log(`✅ Using Gemini model: ${modelName}`);
+      return m;
+    } catch (e) {
+      console.warn(`⚠️ Model ${modelName} not available, trying next...`);
+    }
+  }
+  throw new Error('No compatible Gemini models found. Check your API key and quota.');
+}
 
 // ================================================================
 // HTML FIXING FOR OUTLOOK
@@ -82,7 +100,9 @@ export const processMeetingSummary = async (content: string): Promise<string> =>
     }
 
     console.log('🤖 Starting Gemini processing...');
+    console.log('📝 Content length:', content.length, 'characters');
     
+    const model = await getModel();
     const prompt = PROMPTS.PROCESS.replace('{content}', content);
 
     const result = await model.generateContent(prompt);
@@ -90,23 +110,22 @@ export const processMeetingSummary = async (content: string): Promise<string> =>
     let processedContent = response.text();
 
     if (!processedContent) {
+      console.error('❌ Gemini returned empty response');
       throw new AppError('Gemini returned empty response', 500);
     }
 
-    console.log('✅ Gemini processing completed');
+    console.log('✅ Gemini response received. Length:', processedContent.length);
     
     try {
       // 🔥 תיקון HTML להתאמה מלאה ל-Outlook
       processedContent = fixHTMLForOutlook(processedContent);
       
-      // ✅ נקה escaping מיותר
+      // ✅ נקה escaping מיותר (אבל אל תמחק \n אמיתיים)
       processedContent = processedContent
         .replace(/\\"/g, '"')      // החלף \" ב-"
-        .replace(/\\n/g, '')       // הסר \n
         .replace(/\\\\/g, '\\');   // החלף \\ ב-\
     } catch (fixError: any) {
       console.error('⚠️ Error fixing HTML for Outlook:', fixError);
-      // Continue with original content if fixing fails
     }
     
     console.log('🧹 HTML cleaned from escaping');

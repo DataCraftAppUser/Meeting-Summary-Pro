@@ -321,6 +321,8 @@ router.post('/:id/process', async (req: Request, res: Response, next: NextFuncti
 
     if (error) {
       console.error('❌ Supabase update error in process route:', error);
+      console.dir(error); // Full error details
+      
       // ✅ ניסיון נוסף ללא השדה החדש אם הוא לא קיים ב-DB
       if (error.message.includes('manually_updated') || error.message.includes('column') || error.code === '42703') {
         const { data: retryData, error: retryError } = await supabase
