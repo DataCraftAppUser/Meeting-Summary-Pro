@@ -51,13 +51,13 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      // Check if origin is in allowed origins
+      // Check if origin is in allowed origins or is a Vercel preview URL
       const isAllowed = allowedOrigins.some((allowed) => {
         if (allowed.includes(',')) {
           return allowed.split(',').map(o => o.trim()).includes(origin);
         }
         return allowed === origin;
-      });
+      }) || origin.endsWith('.vercel.app');
 
       if (isAllowed || process.env.NODE_ENV !== 'production') {
         callback(null, true);
