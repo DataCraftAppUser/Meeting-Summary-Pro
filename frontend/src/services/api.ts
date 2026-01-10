@@ -1,4 +1,4 @@
-﻿import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
 import {
   Meeting,
   Client,
@@ -13,7 +13,9 @@ import {
   ProcessMeetingResponse,
 } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Remove trailing /api if present, since API calls already include /api
+const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
 
 class ApiService {
   private api: AxiosInstance;
