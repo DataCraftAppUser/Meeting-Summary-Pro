@@ -14,7 +14,7 @@ if (!process.env.GEMINI_API_KEY) {
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // ================================================================
 // HTML FIXING FOR OUTLOOK
@@ -95,14 +95,19 @@ export const processMeetingSummary = async (content: string): Promise<string> =>
 
     console.log('✅ Gemini processing completed');
     
-    // 🔥 תיקון HTML להתאמה מלאה ל-Outlook
-    processedContent = fixHTMLForOutlook(processedContent);
-    
-    // ✅ נקה escaping מיותר
-    processedContent = processedContent
-      .replace(/\\"/g, '"')      // החלף \" ב-"
-      .replace(/\\n/g, '')       // הסר \n
-      .replace(/\\\\/g, '\\');   // החלף \\ ב-\
+    try {
+      // 🔥 תיקון HTML להתאמה מלאה ל-Outlook
+      processedContent = fixHTMLForOutlook(processedContent);
+      
+      // ✅ נקה escaping מיותר
+      processedContent = processedContent
+        .replace(/\\"/g, '"')      // החלף \" ב-"
+        .replace(/\\n/g, '')       // הסר \n
+        .replace(/\\\\/g, '\\');   // החלף \\ ב-\
+    } catch (fixError: any) {
+      console.error('⚠️ Error fixing HTML for Outlook:', fixError);
+      // Continue with original content if fixing fails
+    }
     
     console.log('🧹 HTML cleaned from escaping');
 
