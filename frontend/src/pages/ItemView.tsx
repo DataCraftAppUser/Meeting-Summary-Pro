@@ -35,7 +35,7 @@ import RichTextEditor from '../components/Common/RichTextEditor';
 import ConfirmDialog from '../components/Common/ConfirmDialog';
 
 const ItemView = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, hub_id } = useParams<{ id: string; hub_id: string }>();
   const navigate = useNavigate();
   const { getItem, processItem, translateItem, updateItem } = useItems();
   const { showToast } = useToast();
@@ -60,12 +60,12 @@ const ItemView = () => {
   }, [id]);
 
   const loadItem = async () => {
-    if (!id) return;
+    if (!id || !hub_id) return;
 
     setLoading(true);
     try {
       console.log('📥 Loading item:', id);
-      const data = await getItem(id);
+      const data = await getItem(id, hub_id);
       console.log('✅ Item loaded:', data);
       
       if (data) {
@@ -78,7 +78,7 @@ const ItemView = () => {
     } catch (error) {
       console.error('❌ Error loading item:', error);
       showToast('שגיאה בטעינת הפריט', 'error');
-      navigate('/items');
+      navigate(hub_id ? `/hub/${hub_id}/items` : '/items');
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,11 @@ const ItemView = () => {
     try {
       console.log('🤖 Starting process for item:', item.id);
       
-      await processItem(item.id);
+      if (!hub_id) {
+        showToast('hub_id נדרש', 'error');
+        return;
+      }
+      await processItem(item.id, hub_id);
       
       console.log('✅ Process completed, reloading item...');
       
@@ -367,7 +371,12 @@ ${content}
     if (window.confirm('האם אתה בטוח שברצונך להסיר את העיבוד לחלוטין?')) {
       setLoading(true);
       try {
-        const success = await updateItem(id, { 
+        if (!hub_id) {
+          showToast('hub_id נדרש', 'error');
+          return;
+        }
+        const success = await updateItem(id, {
+          hub_id,
           processed_content: '', // מחיקת התוכן
           status: 'draft',
           is_processed_manually_updated: false
@@ -402,7 +411,12 @@ ${content}
     
     setIsSaving(true);
     try {
+      if (!hub_id) {
+        showToast('hub_id נדרש', 'error');
+        return;
+      }
       const success = await updateItem(id, { 
+        hub_id,
         processed_content: editedProcessedContent,
         is_processed_manually_updated: true
       });
@@ -447,7 +461,7 @@ ${content}
           <Typography variant="h4" component="h1">
             {item.title}
           </Typography>
-          <IconButton onClick={() => navigate(`/items/${id}/edit`)} color="primary">
+          <IconButton onClick={() => navigate(hub_id ? `/hub/${hub_id}/items/${id}/edit` : `/items/${id}/edit`)} color="primary">
             <EditIcon />
           </IconButton>
         </Stack>

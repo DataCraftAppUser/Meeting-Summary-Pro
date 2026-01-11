@@ -8,10 +8,13 @@ export function useWorkspaces() {
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
 
-  const fetchWorkspaces = useCallback(async () => {
+  const fetchWorkspaces = useCallback(async (hubId?: string) => {
     setLoading(true);
     try {
-      const response = await api.getWorkspaces({ limit: 1000 });
+      if (!hubId) {
+        throw new Error('hub_id is required');
+      }
+      const response = await api.getWorkspaces({ hub_id: hubId, limit: 1000 });
       setWorkspaces(response.data);
     } catch (error: any) {
       showToast('שגיאה בטעינת עולמות תוכן', 'error');
@@ -39,12 +42,16 @@ export function useWorkspaces() {
   );
 
   const createWorkspace = useCallback(
-    async (data: WorkspaceFormData): Promise<Workspace | null> => {
+    async (data: WorkspaceFormData & { hub_id?: string }, hubId?: string): Promise<Workspace | null> => {
       setLoading(true);
       try {
-        const workspace = await api.createWorkspace(data);
+        const hub_id = hubId || data.hub_id;
+        if (!hub_id) {
+          throw new Error('hub_id is required');
+        }
+        const workspace = await api.createWorkspace({ ...data, hub_id });
         showToast('עולם תוכן נוצר בהצלחה', 'success');
-        await fetchWorkspaces(); // Refresh list
+        await fetchWorkspaces(hub_id); // Refresh list
         return workspace;
       } catch (error: any) {
         showToast('שגיאה ביצירת עולם תוכן', 'error');
@@ -58,12 +65,14 @@ export function useWorkspaces() {
   );
 
   const updateWorkspace = useCallback(
-    async (id: string, data: Partial<WorkspaceFormData>): Promise<Workspace | null> => {
+    async (id: string, data: Partial<WorkspaceFormData>, hubId?: string): Promise<Workspace | null> => {
       setLoading(true);
       try {
         const workspace = await api.updateWorkspace(id, data);
         showToast('עולם תוכן עודכן בהצלחה', 'success');
-        await fetchWorkspaces(); // Refresh list
+        if (hubId) {
+          await fetchWorkspaces(hubId); // Refresh list
+        }
         return workspace;
       } catch (error: any) {
         showToast('שגיאה בעדכון עולם תוכן', 'error');
@@ -77,12 +86,14 @@ export function useWorkspaces() {
   );
 
   const deleteWorkspace = useCallback(
-    async (id: string): Promise<boolean> => {
+    async (id: string, hubId?: string): Promise<boolean> => {
       setLoading(true);
       try {
         await api.deleteWorkspace(id);
         showToast('עולם תוכן נמחק בהצלחה', 'success');
-        await fetchWorkspaces(); // Refresh list
+        if (hubId) {
+          await fetchWorkspaces(hubId); // Refresh list
+        }
         return true;
       } catch (error: any) {
         showToast('שגיאה במחיקת עולם תוכן', 'error');

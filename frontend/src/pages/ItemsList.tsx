@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography, Pagination, ToggleButtonGroup, ToggleButton, Container } from '@mui/material';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
@@ -14,6 +14,10 @@ import ConfirmDialog from '../components/Common/ConfirmDialog';
 
 export default function ItemsList() {
   const navigate = useNavigate();
+  const { hub_id } = useParams<{ hub_id: string }>();
+  
+  console.log('📍 ItemsList rendered, hub_id from URL:', hub_id);
+  
   const {
     items,
     loading,
@@ -49,27 +53,38 @@ export default function ItemsList() {
   };
 
   const loadData = useCallback(async () => {
+    console.log('🔄 loadData called, hub_id:', hub_id);
+    if (!hub_id) {
+      console.log('⚠️ No hub_id, returning early');
+      return;
+    }
     try {
+      console.log('✅ hub_id exists, calling fetchItems...');
       setError(false);
       await fetchItems({
+        hub_id,
         search: searchQuery || undefined,
         workspace_id: selectedWorkspace || undefined,
         topic_id: selectedTopic || undefined,
         content_type: selectedContentType || undefined,
       });
     } catch (err) {
+      console.error('❌ Error in loadData:', err);
       setError(true);
     }
-  }, [fetchItems, searchQuery, selectedWorkspace, selectedTopic, selectedContentType]);
+  }, [hub_id, fetchItems, searchQuery, selectedWorkspace, selectedTopic, selectedContentType]);
 
   useEffect(() => {
+    console.log('🔍 useEffect triggered, page:', page, 'hub_id:', hub_id);
     loadData();
   }, [page, loadData]);
 
   useEffect(() => {
-    fetchWorkspaces();
-    fetchTopics();
-  }, [fetchWorkspaces, fetchTopics]);
+    if (hub_id) {
+      fetchWorkspaces(hub_id);
+      fetchTopics(hub_id);
+    }
+  }, [hub_id, fetchWorkspaces, fetchTopics]);
 
   const handleDelete = (id: string) => {
     setItemToDelete(id);
@@ -77,11 +92,13 @@ export default function ItemsList() {
   };
 
   const confirmDelete = async () => {
-    if (itemToDelete) {
-      const success = await deleteItem(itemToDelete);
+    if (itemToDelete && hub_id) {
+      const success = await deleteItem(itemToDelete, hub_id);
       if (success) {
         await loadData();
       }
+    } else if (!hub_id) {
+      setError(true);
     }
     setDeleteDialogOpen(false);
     setItemToDelete(null);
@@ -148,7 +165,7 @@ export default function ItemsList() {
           </Typography>
         </Box>
 
-        <Box display="flex" alignItems="center" gap={3}>
+        <Box display="flex" alignItems="center" gap={2}>
           {/* ✨ כפתורי החלפת תצוגה */}
           <ToggleButtonGroup
             value={viewMode}
@@ -219,7 +236,7 @@ export default function ItemsList() {
           <ItemList
             items={items}
             onDelete={handleDelete}
-            onNewItem={() => navigate('/items/new')}
+            onNewItem={() => navigate(`/hub/${hub_id}/items/new`)}
             viewMode={viewMode}
           />
 

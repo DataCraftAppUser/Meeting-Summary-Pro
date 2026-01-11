@@ -24,7 +24,7 @@ import { useToast } from '../hooks/useToast';
 import { ItemFormData } from '../types';
 
 const ItemEditor: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, hub_id } = useParams<{ id?: string; hub_id: string }>();
   const navigate = useNavigate();
   const { getItem, createItem, updateItem } = useItems();
   const { workspaces, fetchWorkspaces, createWorkspace } = useWorkspaces();
@@ -60,18 +60,20 @@ const ItemEditor: React.FC = () => {
     try {
       setLoading(true);
       
-      // ✅ טען workspaces ו-topics במקביל
-      await Promise.all([
-        fetchWorkspaces(),
-        fetchTopics(),
-      ]);
+      // ✅ טען workspaces ו-topics במקביל (רק אם יש hub_id)
+      if (hub_id) {
+        await Promise.all([
+          fetchWorkspaces(hub_id),
+          fetchTopics(hub_id),
+        ]);
+      }
 
       // ✅ אם יש ID תקין (לא "new" ולא undefined), טען את הפריט
-      if (id && id !== 'new' && id !== 'undefined' && id.trim() !== '') {
+      if (id && id !== 'new' && id !== 'undefined' && id.trim() !== '' && hub_id) {
         console.log('📝 Loading item for edit, ID:', id);
         
         try {
-          const response = await getItem(id);
+          const response = await getItem(id, hub_id);
           console.log('📦 Item response:', response);
           
           // ✅ טיפול בפורמטים שונים של response
@@ -118,12 +120,12 @@ const ItemEditor: React.FC = () => {
           } else {
             console.warn('⚠️ Item data is invalid:', item);
             showToast('לא נמצא פריט לעריכה', 'error');
-            navigate('/items');
+            navigate(hub_id ? `/hub/${hub_id}/items` : '/items');
           }
         } catch (itemError) {
           console.error('❌ Error loading item:', itemError);
           showToast('שגיאה בטעינת הפריט', 'error');
-          navigate('/items');
+          navigate(hub_id ? `/hub/${hub_id}/items` : '/items');
         }
       } else {
         console.log('🆕 Creating new item (no ID or ID is "new")');
@@ -143,12 +145,17 @@ const ItemEditor: React.FC = () => {
       return;
     }
 
+    if (!hub_id) {
+      showToast('שגיאה: אין hub_id', 'error');
+      return;
+    }
+
     try {
       setCreatingWorkspace(true);
-      const newWorkspace = await createWorkspace({ name: newWorkspaceName.trim() });
+      const newWorkspace = await createWorkspace({ name: newWorkspaceName.trim() }, hub_id);
       
       if (newWorkspace) {
-        await fetchWorkspaces();
+        await fetchWorkspaces(hub_id);
         setFormData(prev => ({ ...prev, workspace_id: newWorkspace.id }));
         setWorkspaceDialogOpen(false);
         setNewWorkspaceName('');
@@ -174,16 +181,21 @@ const ItemEditor: React.FC = () => {
       return;
     }
 
+    if (!hub_id) {
+      showToast('שגיאה: אין hub_id', 'error');
+      return;
+    }
+
     try {
       setCreatingTopic(true);
       const newTopic = await createTopic({
         name: newTopicName.trim(),
         workspace_id: formData.workspace_id,
         status: 'active',
-      });
+      }, hub_id);
       
       if (newTopic) {
-        await fetchTopics();
+        await fetchTopics(hub_id);
         setFormData(prev => ({ ...prev, topic_id: newTopic.id }));
         setTopicDialogOpen(false);
         setNewTopicName('');
@@ -217,30 +229,34 @@ const ItemEditor: React.FC = () => {
     try {
       setSaving(true);
 
-      if (id && id !== 'new' && id !== 'undefined') {
+      if (id && id !== 'new' && id !== 'undefined' && hub_id) {
         // עדכון פריט קיים
-        await updateItem(id, formData);
+        await updateItem(id, { ...formData, hub_id });
         showToast('הפריט עודכן בהצלחה', 'success');
-        navigate(`/items/${id}`);
+        navigate(`/hub/${hub_id}/items/${id}`);
       } else {
         // יצירת פריט חדש
+        if (!hub_id) {
+          showToast('hub_id נדרש', 'error');
+          return;
+        }
         console.log('🆕 Creating new item with data:', formData);
-        const newItem = await createItem(formData);
+        const newItem = await createItem({ ...formData, hub_id });
         
         console.log('✅ New item response:', newItem);
         
         if (newItem && newItem.id) {
           showToast('הפריט נשמר בהצלחה', 'success');
-          console.log('✅ Navigating to:', `/items/${newItem.id}`);
+          console.log('✅ Navigating to:', hub_id ? `/hub/${hub_id}/items/${newItem.id}` : `/items/${newItem.id}`);
           
           // ✅ השהיה קטנה כדי לוודא שה-DB התעדכן
           setTimeout(() => {
-            navigate(`/items/${newItem.id}`);
+            navigate(hub_id ? `/hub/${hub_id}/items/${newItem.id}` : `/items/${newItem.id}`);
           }, 500);
         } else {
           showToast('הפריט נשמר, אבל לא ניתן לפתוח אותו', 'warning');
           console.error('❌ newItem.id is missing:', newItem);
-          navigate('/items');
+          navigate(hub_id ? `/hub/${hub_id}/items` : '/items');
         }
       }
     } catch (error: any) {
@@ -260,7 +276,7 @@ const ItemEditor: React.FC = () => {
       {/* Header */}
       <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => navigate('/items')} size="small">
+          <IconButton onClick={() => navigate(hub_id ? `/hub/${hub_id}/items` : '/items')} size="small">
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h5">

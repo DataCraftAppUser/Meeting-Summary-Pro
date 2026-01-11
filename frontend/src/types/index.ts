@@ -1,4 +1,32 @@
 // ========================================
+// Auth & Hub Types
+// ========================================
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  is_admin: boolean;
+  last_active_hub_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Hub {
+  id: string;
+  name: string;
+  type: 'personal' | 'shared';
+  color_theme: 'green' | 'navy';
+  icon: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  role?: 'owner' | 'member';
+}
+
+// ========================================
 // Workspace Types
 // ========================================
 
@@ -19,6 +47,7 @@ export interface WorkspaceFormData {
   phone?: string;
   company?: string;
   notes?: string;
+  hub_id?: string;
 }
 
 // ========================================
@@ -51,6 +80,7 @@ export interface TopicFormData {
   estimated_hours?: number;
   budget_amount?: number;
   hourly_rate?: number;
+  hub_id?: string;
 }
 
 // ========================================
@@ -70,36 +100,44 @@ export interface ActionItem {
 
 export interface Item {
   id: string;
+  hub_id: string;
   workspace_id?: string;
   topic_id?: string;
   title: string;
   meeting_date: string;
   meeting_time?: string;
   participants?: string[];
-    content_type?: 'meeting' | 'work_log' | 'knowledge_item';
-    content: string;
-    processed_content?: string;
-    full_raw_content?: string;
-    action_items?: ActionItem[];
-    follow_up_required?: boolean;
-    follow_up_date?: string;
-    follow_up_time?: string;
-    follow_up_tbd?: boolean;
-    is_processed_manually_updated?: boolean;
-    processed_by?: string;
-    status: 'draft' | 'final' | 'archived' | 'processing' | 'processed';
-    created_at: string;
-    updated_at: string;
-    last_edited_at?: string;
-    workspaces?: {
-      id: string;
-      name: string;
-    };
-    topics?: {
-      id: string;
-      name: string;
-    };
-  }
+  content_type?: 'meeting' | 'work_log' | 'knowledge_item';
+  content: string;
+  processed_content?: string;
+  full_raw_content?: string;
+  action_items?: ActionItem[];
+  follow_up_required?: boolean;
+  follow_up_date?: string;
+  follow_up_time?: string;
+  follow_up_tbd?: boolean;
+  is_processed_manually_updated?: boolean;
+  processed_by?: string;
+  status: 'draft' | 'final' | 'archived' | 'processing' | 'processed';
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  last_edited_at?: string;
+  workspaces?: {
+    id: string;
+    name: string;
+  };
+  topics?: {
+    id: string;
+    name: string;
+  };
+  creator?: {
+    id: string;
+    email: string;
+    full_name?: string;
+    avatar_url?: string;
+  };
+}
   
   export interface ItemFormData {
     workspace_id?: string;
