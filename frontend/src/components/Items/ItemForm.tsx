@@ -42,6 +42,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { ItemFormData, Workspace, Topic, ActionItem } from '../../types';
 
+// טייפ מקומי שכולל גם את האפשרות ליצירה חדשה
+type WorkspaceOption = Workspace | { id: 'create-new'; name: string; isCreateOption: true };
+type TopicOption = Topic | { id: 'create-new'; name: string; isCreateOption: true };
+
 // פונקציה פשוטה ליצירת ID זמני
 const generateTempId = () => `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -194,7 +198,7 @@ export default function ItemForm({
   const getSection1Label = () => {
     switch (formData.content_type) {
       case 'work_log': return 'פרטי יומן העבודה';
-      case 'knowledge': return 'פרטי פריט הידע';
+      case 'knowledge_item': return 'פרטי פריט הידע';
       default: return 'פרטי פגישה';
     }
   };
@@ -202,7 +206,7 @@ export default function ItemForm({
   const getSection2Label = () => {
     switch (formData.content_type) {
       case 'work_log': return 'תוכן יומן העבודה';
-      case 'knowledge': return 'תוכן פריט הידע';
+      case 'knowledge_item': return 'תוכן פריט הידע';
       default: return 'תוכן הפגישה';
     }
   };
@@ -245,16 +249,36 @@ export default function ItemForm({
 
               {/* עולם תוכן */}
               <Grid item xs={12} sm={6} md={3}>
-                <Autocomplete
-                  options={workspaces}
+                <Autocomplete<WorkspaceOption>
+                  options={[
+                    ...workspaces,
+                    { id: 'create-new', name: 'צור חדש', isCreateOption: true }
+                  ] as WorkspaceOption[]}
                   getOptionLabel={(option) => option.name}
                   value={workspaces.find((w) => w.id === formData.workspace_id) || null}
                   onChange={(_, value) => {
-                    onChange({ 
-                      workspace_id: value?.id,
-                      topic_id: undefined
-                    });
+                    if (value && 'isCreateOption' in value && value.isCreateOption) {
+                      // פתיחת דיאלוג יצירת workspace חדש
+                      onCreateWorkspace();
+                    } else {
+                      onChange({
+                        workspace_id: (value as Workspace)?.id,
+                        topic_id: undefined
+                      });
+                    }
                   }}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props}>
+                      {'isCreateOption' in option && option.isCreateOption ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', color: 'primary.main', fontWeight: 500 }}>
+                          <AddIcon sx={{ mr: 1, fontSize: 18 }} />
+                          {option.name.replace('+ ', '')}
+                        </Box>
+                      ) : (
+                        option.name
+                      )}
+                    </Box>
+                  )}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -271,24 +295,38 @@ export default function ItemForm({
                     />
                   )}
                 />
-                <Button
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={onCreateWorkspace}
-                  sx={{ mt: 0.5 }}
-                >
-                  צור עולם תוכן
-                </Button>
               </Grid>
 
               {/* נושא */}
               <Grid item xs={12} sm={6} md={3}>
-                <Autocomplete
-                  options={filteredTopics}
+                <Autocomplete<TopicOption>
+                  options={[
+                    ...filteredTopics,
+                    { id: 'create-new', name: 'צור חדש', isCreateOption: true }
+                  ] as TopicOption[]}
                   getOptionLabel={(option) => option.name}
                   value={filteredTopics.find((t) => t.id === formData.topic_id) || null}
-                  onChange={(_, value) => onChange({ topic_id: value?.id })}
+                  onChange={(_, value) => {
+                    if (value && 'isCreateOption' in value && value.isCreateOption) {
+                      // פתיחת דיאלוג יצירת topic חדש
+                      onCreateTopic();
+                    } else {
+                      onChange({ topic_id: (value as Topic)?.id });
+                    }
+                  }}
                   disabled={!formData.workspace_id}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props}>
+                      {'isCreateOption' in option && option.isCreateOption ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', color: 'primary.main', fontWeight: 500 }}>
+                          <AddIcon sx={{ mr: 1, fontSize: 18 }} />
+                          {option.name}
+                        </Box>
+                      ) : (
+                        option.name
+                      )}
+                    </Box>
+                  )}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -305,15 +343,6 @@ export default function ItemForm({
                     />
                   )}
                 />
-                <Button
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={onCreateTopic}
-                  disabled={!formData.workspace_id}
-                  sx={{ mt: 0.5 }}
-                >
-                  צור נושא/פרויקט
-                </Button>
               </Grid>
 
               {/* תאריך */}
@@ -347,7 +376,7 @@ export default function ItemForm({
                 </Grid>
 
                 {/* שעה */}
-                {formData.content_type !== 'knowledge' && formData.content_type !== 'work_log' && (
+                {formData.content_type !== 'knowledge_item' && formData.content_type !== 'work_log' && (
                   <Grid item xs={12} sm={6} md={3}>
                     <TimePicker
                       label="שעה"
@@ -379,7 +408,7 @@ export default function ItemForm({
               )}
 
               {/* משתתפים */}
-              {formData.content_type !== 'knowledge' && (
+              {formData.content_type !== 'knowledge_item' && (
                 <Grid item xs={12}>
                   <Autocomplete
                     multiple

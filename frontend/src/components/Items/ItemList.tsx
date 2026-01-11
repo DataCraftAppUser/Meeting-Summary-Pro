@@ -14,8 +14,6 @@ import {
   Grid,
   Chip,
 } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Item } from '../../types';
 import ItemCard from './ItemCard';
@@ -142,6 +140,7 @@ export default function ItemList({
             <TableRow
               key={item.id}
               hover
+              onClick={() => navigate(`/items/${item.id}`)}
               sx={{
                 cursor: 'pointer',
                 '&:hover': {
@@ -177,10 +176,6 @@ export default function ItemList({
                       textDecoration: 'underline',
                     },
                   }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/items/${item.id}`);
-                  }}
                 >
                   {item.title}
                 </Typography>
@@ -209,26 +204,6 @@ export default function ItemList({
               </TableCell>
               <TableCell align="right">
                 <Box display="flex" gap={0.5}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/items/${item.id}`);
-                    }}
-                    title="צפייה"
-                  >
-                    <VisibilityIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/items/${item.id}/edit`);
-                    }}
-                    title="עריכה"
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
                   <IconButton
                     size="small"
                     color="error"

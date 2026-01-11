@@ -185,8 +185,8 @@ BEGIN
     SELECT COALESCE(MAX(version_number), 0) + 1 INTO next_version
     FROM item_versions WHERE item_id = NEW.id;
     
-    INSERT INTO item_versions (item_id, version_number, content, processed_content, created_by)
-    VALUES (NEW.id, next_version, NEW.content, NEW.processed_content, NEW.created_by);
+    INSERT INTO item_versions (item_id, version_number, content, processed_content, processed_by, created_by)
+    VALUES (NEW.id, next_version, NEW.content, NEW.processed_content, NEW.processed_by, NEW.created_by);
   END IF;
   RETURN NEW;
 END;

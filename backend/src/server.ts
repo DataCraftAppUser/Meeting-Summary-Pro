@@ -22,6 +22,7 @@ import itemsRouter from './routes/items';
 import workspacesRouter from './routes/workspaces';
 import topicsRouter from './routes/topics';
 import aiRouter from './routes/ai';
+import aiPromptsRouter from './routes/ai_prompts';
 
 // Middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -115,6 +116,7 @@ app.use('/api/items', itemsRouter);
 app.use('/api/workspaces', workspacesRouter);
 app.use('/api/topics', topicsRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/prompts', aiPromptsRouter);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
@@ -128,6 +130,7 @@ app.get('/', (req: Request, res: Response) => {
       workspaces: '/api/workspaces',
       topics: '/api/topics',
       ai: '/api/ai',
+      prompts: '/api/prompts',
     },
     docs: 'https://github.com/your-repo/docs',
   });

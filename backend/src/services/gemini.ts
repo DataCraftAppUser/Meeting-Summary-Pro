@@ -5,6 +5,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppError } from '../middleware/errorHandler';
+import { supabase } from '../config/supabase';
 import PROMPTS from './prompts';
 
 // Validate API key
@@ -15,23 +16,75 @@ if (!process.env.GEMINI_API_KEY) {
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+interface PromptConfig {
+  temperature?: number;
+  [key: string]: any;
+}
+
+interface PromptData {
+  content: string;
+  configuration: PromptConfig;
+}
+
+interface ProcessResult {
+  content: string;
+  model: string;
+}
+
 /**
  * Get the best available model
  */
-async function getModel() {
+async function getModel(config?: PromptConfig): Promise<{ model: any; modelName: string }> {
   const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
   for (const modelName of models) {
     try {
-      const m = genAI.getGenerativeModel({ model: modelName });
-      // Test the model with a tiny prompt
-      await m.generateContent('t');
-      console.log(`✅ Using Gemini model: ${modelName}`);
-      return m;
+      const m = genAI.getGenerativeModel({ 
+        model: modelName,
+        generationConfig: config ? { temperature: config.temperature } : undefined
+      });
+      // Test the model with a tiny prompt - only if no config is provided to avoid double calls
+      if (!config) {
+        await m.generateContent('t');
+      }
+      console.log(`✅ Using Gemini model: ${modelName} ${config ? `with temp: ${config.temperature}` : ''}`);
+      return { model: m, modelName };
     } catch (e) {
       console.warn(`⚠️ Model ${modelName} not available, trying next...`);
     }
   }
   throw new Error('No compatible Gemini models found. Check your API key and quota.');
+}
+
+/**
+ * Get prompt content and config from database or fallback to static prompts
+ */
+async function getPromptData(id: string): Promise<PromptData> {
+  try {
+    const { data, error } = await supabase
+      .from('ai_prompts')
+      .select('content, configuration')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      console.warn(`⚠️ Prompt ${id} not found in DB.`);
+      return {
+        content: '',
+        configuration: { temperature: 0.7 }
+      };
+    }
+
+    return {
+      content: data.content,
+      configuration: data.configuration || { temperature: 0.7 }
+    };
+  } catch (err) {
+    console.error(`❌ Error fetching prompt ${id} from DB:`, err);
+    return {
+      content: PROMPTS[id as keyof typeof PROMPTS] || '',
+      configuration: { temperature: 0.7 }
+    };
+  }
 }
 
 // ================================================================
@@ -91,19 +144,29 @@ function fixHTMLForOutlook(html: string): string {
 // ================================================================
 
 /**
- * עיבוד סיכום פגישה - פרמול והעצבה
+ * עיבוד תוכן באמצעות AI - מותאם לסוג התוכן
  */
-export const processMeetingSummary = async (content: string): Promise<string> => {
+export const processMeetingSummary = async (content: string, contentType: string = 'meeting'): Promise<ProcessResult> => {
   try {
     if (!content || content.trim().length < 10) {
       throw new AppError('Content is too short to process', 400);
     }
 
-    console.log('🤖 Starting Gemini processing...');
+    console.log(`🤖 Starting Gemini processing for content_type: ${contentType}...`);
     console.log('📝 Content length:', content.length, 'characters');
     
-    const model = await getModel();
-    const prompt = PROMPTS.PROCESS.replace('{content}', content);
+    // Use contentType as prompt ID directly
+    const promptId = contentType;
+    
+    const { content: promptTemplate, configuration } = await getPromptData(promptId);
+    
+    if (!promptTemplate) {
+      console.warn(`⚠️ No prompt found for ${promptId}, falling back to meeting`);
+      return await processMeetingSummary(content, 'meeting'); // Recursion for fallback
+    }
+
+    const { model, modelName } = await getModel(configuration);
+    const prompt = promptTemplate.replace('{content}', content);
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -117,7 +180,7 @@ export const processMeetingSummary = async (content: string): Promise<string> =>
     console.log('✅ Gemini response received. Length:', processedContent.length);
     
     try {
-      // 🔥 תיקון HTML להתאמה מלאה ל-Outlook
+      // 🔥 תיקון HTML להתאמה מלאה ל-Outlook (רק אם לא מדובר בתרגום שכבר מטפל בזה)
       processedContent = fixHTMLForOutlook(processedContent);
       
       // ✅ נקה escaping מיותר (אבל אל תמחק \n אמיתיים)
@@ -130,7 +193,17 @@ export const processMeetingSummary = async (content: string): Promise<string> =>
     
     console.log('🧹 HTML cleaned from escaping');
 
-    return processedContent.trim();
+    // Get the prompt name from DB for the processed_by field
+    const { data: promptData } = await supabase
+      .from('ai_prompts')
+      .select('name')
+      .eq('id', promptId)
+      .single();
+
+    return {
+      content: processedContent.trim(),
+      model: promptData?.name || contentType
+    };
   } catch (error: any) {
     console.error('❌ Gemini processing error:', error);
     
@@ -147,20 +220,23 @@ export const processMeetingSummary = async (content: string): Promise<string> =>
 };
 
 /**
- * תרגום סיכום לאנגלית
+ * תרגום תוכן לאנגלית עסקית גבוהה
  */
 export const translateMeeting = async (
   content: string,
   targetLanguage: string = 'en'
-): Promise<string> => {
+): Promise<ProcessResult> => {
   try {
     if (!content || content.trim().length < 10) {
       throw new AppError('Content is too short to translate', 400);
     }
 
-    const prompt = PROMPTS.TRANSLATE.replace('{content}', content);
+    console.log('🌍 Starting Gemini translation...');
+    
+    const { content: promptTemplate, configuration } = await getPromptData('translator');
+    const prompt = promptTemplate ? promptTemplate.replace('{content}', content) : PROMPTS.TRANSLATE.replace('{content}', content);
 
-    const model = await getModel();
+    const { model, modelName } = await getModel(configuration);
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const translatedContent = response.text();
@@ -169,7 +245,17 @@ export const translateMeeting = async (
       throw new AppError('Gemini returned empty translation', 500);
     }
 
-    return translatedContent.trim();
+    // Get the prompt name from DB for the processed_by field
+    const { data: promptData } = await supabase
+      .from('ai_prompts')
+      .select('name')
+      .eq('id', 'translator')
+      .single();
+
+    return {
+      content: translatedContent.trim(),
+      model: promptData?.name || 'Translator'
+    };
   } catch (error: any) {
     console.error('❌ Gemini translation error:', error);
     
@@ -182,38 +268,11 @@ export const translateMeeting = async (
 };
 
 /**
- * העשרת תוכן עם מידע נוסף
- */
-export const enrichMeetingContent = async (content: string): Promise<string> => {
-  try {
-    if (!content || content.trim().length < 10) {
-      throw new AppError('Content is too short to enrich', 400);
-    }
-
-    const prompt = PROMPTS.ENRICH.replace('{content}', content);
-
-    const model = await getModel();
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const enrichedContent = response.text();
-
-    if (!enrichedContent) {
-      throw new AppError('Gemini returned empty enrichment', 500);
-    }
-
-    return enrichedContent.trim();
-  } catch (error: any) {
-    console.error('❌ Gemini enrichment error:', error);
-    throw new AppError('Failed to enrich content', 500);
-  }
-};
-
-/**
  * בדיקת חיבור ל-Gemini API
  */
 export const testGeminiConnection = async (): Promise<boolean> => {
   try {
-    const model = await getModel();
+    const { model } = await getModel();
     const result = await model.generateContent('Hello, respond with OK if you work.');
     const response = await result.response;
     const text = response.text();
@@ -229,6 +288,5 @@ export const testGeminiConnection = async (): Promise<boolean> => {
 export default {
   processMeetingSummary,
   translateMeeting,
-  enrichMeetingContent,
   testGeminiConnection,
 };
