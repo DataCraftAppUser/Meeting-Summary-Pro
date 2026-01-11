@@ -48,7 +48,7 @@ interface ManageEntitiesDialogProps {
   onTopicEdit: (id: string, name: string) => Promise<boolean>;
   onTopicDelete: (id: string) => Promise<boolean>;
   onTopicCreate: (name: string, workspaceId: string) => Promise<boolean>;
-  onPromptUpdate: (id: string, content: string) => Promise<boolean>;
+  onPromptUpdate: (id: string, content: string, configuration?: any) => Promise<boolean>;
   onUpdate: () => void;
 }
 
@@ -73,6 +73,7 @@ export default function ManageEntitiesDialog({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editPromptContent, setEditPromptContent] = useState('');
+  const [editPromptConfig, setEditPromptConfig] = useState('');
   const [newName, setNewName] = useState('');
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState('');
   const [currentEntity, setCurrentEntity] = useState<Workspace | Topic | null>(null);
@@ -84,6 +85,7 @@ export default function ManageEntitiesDialog({
     setEditingId(entity.id);
     if ('content' in entity) {
       setEditPromptContent(entity.content);
+      setEditPromptConfig(JSON.stringify(entity.configuration || { temperature: 0.7 }, null, 2));
     } else {
       setEditName(entity.name);
     }
@@ -95,7 +97,14 @@ export default function ManageEntitiesDialog({
     let success = false;
     
     if (type === 'prompt') {
-      success = await onPromptUpdate(entity.id, editPromptContent);
+      let config = {};
+      try {
+        config = JSON.parse(editPromptConfig);
+      } catch (e) {
+        console.error('Invalid JSON in config');
+        // fallback or show error
+      }
+      success = await onPromptUpdate(entity.id, editPromptContent, config);
     } else {
       if (!editName.trim()) {
         setEditingId(null);
@@ -648,6 +657,28 @@ export default function ManageEntitiesDialog({
                                   },
                                 }}
                               />
+                              <Box sx={{ mt: 2 }}>
+                                <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
+                                  Configuration (JSON):
+                                </Typography>
+                                <TextField
+                                  fullWidth
+                                  multiline
+                                  minRows={2}
+                                  maxRows={5}
+                                  value={editPromptConfig}
+                                  onChange={(e) => setEditPromptConfig(e.target.value)}
+                                  variant="outlined"
+                                  placeholder='{"temperature": 0.7}'
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      backgroundColor: 'white',
+                                      fontFamily: 'monospace',
+                                      fontSize: '0.75rem',
+                                    },
+                                  }}
+                                />
+                              </Box>
                               <Stack direction="row" spacing={1} sx={{ mt: 2, justifyContent: 'flex-end' }}>
                                 <Button
                                   size="small"

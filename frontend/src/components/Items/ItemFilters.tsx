@@ -83,7 +83,7 @@ export default function ItemFilters({
             onChange={(e) => onContentTypeChange(e.target.value)}
           >
             <MenuItem value="">כל הסוגים</MenuItem>
-            <MenuItem value="knowledge">פריט ידע</MenuItem>
+            <MenuItem value="knowledge_item">פריט ידע</MenuItem>
             <MenuItem value="meeting">סיכום פגישה</MenuItem>
             <MenuItem value="work_log">יומן עבודה</MenuItem>
           </TextField>

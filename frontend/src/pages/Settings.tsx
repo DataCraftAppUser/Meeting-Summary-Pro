@@ -95,9 +95,9 @@ export default function Settings() {
     }
   };
 
-  const handlePromptUpdate = async (id: string, content: string): Promise<boolean> => {
+  const handlePromptUpdate = async (id: string, content: string, configuration?: any): Promise<boolean> => {
     try {
-      const success = await updatePrompt(id, content);
+      const success = await updatePrompt(id, content, configuration);
       if (success) {
         await fetchPrompts();
       }

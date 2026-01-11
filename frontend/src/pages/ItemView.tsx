@@ -570,8 +570,7 @@ ${content}
               variant="outlined"
               startIcon={translating ? <CircularProgress size={20} /> : <TranslateIcon />}
               onClick={handleTranslate}
-              disabled={true} // מנוטרל זמנית - הפונקציונליות עדיין לא עובדת
-              title="האפשרות תהיה זמינה בקרוב"
+              disabled={translating || !item?.processed_content}
             >
               {translating ? 'מתרגם...' : 'תרגום'}
             </Button>
@@ -693,6 +692,14 @@ ${content}
               </Typography>
             </>
           )}
+          {viewMode === 'processed' && item.processed_by && (
+            <>
+              {' • '}
+              <Typography variant="caption" color="text.secondary">
+                עובד באמצעות DocCraftAI {item.processed_by} Processor
+              </Typography>
+            </>
+          )}
         </Box>
       </Paper>
 
@@ -700,7 +707,7 @@ ${content}
       <ConfirmDialog
         open={processConfirmOpen}
         title="עיבוד AI מחדש"
-        message="שים לב: קיימים שינויים ידניים בגרסת ה-AI. עיבוד מחדש יחליף את העריכה שלך בטקסט חדש."
+        message="שינויים ידניים זוהו: עיבוד מחדש יחליף את העריכה שלך בטקסט חדש. האם להמשיך?"
         onConfirm={() => {
           setProcessConfirmOpen(false);
           startProcessing();

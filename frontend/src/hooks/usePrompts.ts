@@ -6,6 +6,7 @@ export interface Prompt {
   name: string;
   content: string;
   description: string;
+  configuration?: any;
   updated_at: string;
 }
 
@@ -28,11 +29,11 @@ export const usePrompts = () => {
     }
   }, []);
 
-  const updatePrompt = async (id: string, content: string): Promise<boolean> => {
+  const updatePrompt = async (id: string, content: string, configuration?: any): Promise<boolean> => {
     setLoading(true);
     setError(null);
     try {
-      await apiService.updatePrompt(id, content);
+      await apiService.updatePrompt(id, content, configuration);
       await fetchPrompts();
       return true;
     } catch (err: any) {

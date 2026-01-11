@@ -27,14 +27,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         onEditorChange={(content: string) => onChange(content)}
         onFocus={() => onFocus && onFocus()}
         init={{
-          height: 500,
+          min_height: 500,
+          max_height: 800,
           menubar: false,
           directionality: 'rtl',
           language: 'he_IL',
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
             'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'table', 'help', 'wordcount', 'directionality'
+            'insertdatetime', 'table', 'help', 'wordcount', 'directionality',
+            'autoresize'
           ],
           toolbar:
             'undo redo | formatselect | bold italic underline strikethrough | ' +

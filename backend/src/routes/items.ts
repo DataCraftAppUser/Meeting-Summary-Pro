@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 import { AppError } from '../middleware/errorHandler';
-import { processMeetingSummary, translateMeeting, enrichMeetingContent } from '../services/gemini';
+import { processMeetingSummary, translateMeeting } from '../services/gemini';
 
 const router = Router();
 
@@ -308,12 +308,16 @@ router.post('/:id/process', async (req: Request, res: Response, next: NextFuncti
 
     await supabase.from('items').update({ status: 'processing' }).eq('id', id);
 
-    const processedContent = await processMeetingSummary(item.full_raw_content || item.content);
+    const result = await processMeetingSummary(
+      item.full_raw_content || item.content,
+      item.content_type || 'meeting'
+    );
 
     const { data, error } = await supabase
       .from('items')
       .update({
-        processed_content: processedContent,
+        processed_content: result.content,
+        processed_by: result.model,
         status: 'processed',
         is_processed_manually_updated: false,
         updated_at: new Date().toISOString(),
@@ -327,11 +331,11 @@ router.post('/:id/process', async (req: Request, res: Response, next: NextFuncti
       console.dir(error); // Full error details
       
       // ✅ ניסיון נוסף ללא השדה החדש אם הוא לא קיים ב-DB
-      if (error.message.includes('manually_updated') || error.message.includes('column') || error.code === '42703') {
+      if (error.message.includes('processed_by') || error.message.includes('column') || error.code === '42703') {
         const { data: retryData, error: retryError } = await supabase
           .from('items')
           .update({
-            processed_content: processedContent,
+            processed_content: result.content,
             status: 'processed',
             updated_at: new Date().toISOString(),
           })
@@ -367,53 +371,28 @@ router.post('/:id/translate', async (req: Request, res: Response, next: NextFunc
     if (fetchError) throw new AppError(fetchError.message, 500);
     if (!item) throw new AppError('פריט לא נמצא', 404);
 
-    const translatedContent = await translateMeeting(item.processed_content || item.content, language);
+    const result = await translateMeeting(item.processed_content || item.content, language);
 
     const { error: saveError } = await supabase.from('item_translations').insert({
       item_id: id,
       language,
-      translated_content: translatedContent,
+      translated_content: result.content,
+      processed_by: result.model
     });
 
     if (saveError) {
       console.warn('Could not save translation:', saveError.message);
+      // Retry without processed_by if it failed
+      if (saveError.message.includes('processed_by')) {
+        await supabase.from('item_translations').insert({
+          item_id: id,
+          language,
+          translated_content: result.content,
+        });
+      }
     }
 
-    res.json({ success: true, data: { language, content: translatedContent } });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ✅ POST /api/items/:id/enrich - העשרת תוכן
-router.post('/:id/enrich', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-
-    const { data: item, error: fetchError } = await supabase
-      .from('items')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) throw new AppError(fetchError.message, 500);
-    if (!item) throw new AppError('פריט לא נמצא', 404);
-
-    const enrichedContent = await enrichMeetingContent(item.content);
-
-    const { data, error } = await supabase
-      .from('items')
-      .update({
-        content: enrichedContent,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw new AppError(error.message, 500);
-
-    res.json({ success: true, data });
+    res.json({ success: true, data: { language, content: result.content, model: result.model } });
   } catch (error) {
     next(error);
   }

@@ -26,7 +26,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 30000,
+      timeout: 90000,
     });
 
     // Request interceptor
@@ -177,13 +177,6 @@ class ApiService {
     return response.data.data || response.data;
   }
 
-  async enrichItem(itemId: string, content: string): Promise<Item> {
-    const response = await this.api.post(`/api/items/${itemId}/enrich`, {
-      content,
-    });
-    return response.data.data || response.data;
-  }
-
   async translateItem(itemId: string, language: string = 'en'): Promise<ItemTranslation> {
     const response = await this.api.post(`/api/items/${itemId}/translate`, {
       language,
@@ -198,8 +191,8 @@ class ApiService {
     return response.data;
   }
 
-  async updatePrompt(id: string, content: string): Promise<any> {
-    const response = await this.api.put(`/api/prompts/${id}`, { content });
+  async updatePrompt(id: string, content: string, configuration?: any): Promise<any> {
+    const response = await this.api.put(`/api/prompts/${id}`, { content, configuration });
     return response.data;
   }
 

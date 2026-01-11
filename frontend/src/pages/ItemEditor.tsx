@@ -37,7 +37,7 @@ const ItemEditor: React.FC = () => {
     title: '',
     meeting_date: new Date().toISOString().split('T')[0],
     content: '',
-    content_type: 'knowledge',
+    content_type: 'knowledge_item',
     status: 'draft',
   });
 
@@ -79,37 +79,20 @@ const ItemEditor: React.FC = () => {
           console.log('✅ Item data:', item);
           
           if (item && item.id) {
-            // ✅ שמור על HTML המקורי מהעורך - אל תמיר לטקסט
-            let contentToEdit = item.content || '';
+            // ✅ טעינת תוכן חכמה: העדפת השדה הארוך ביותר מבין השניים
+            // בפריטים ישנים המידע המלא עשוי להיות ב-full_raw_content
+            const rawContent = item.content || '';
+            const fullContent = item.full_raw_content || '';
             
-            // ✅ אם יש full_raw_content, נסה לחלץ את התוכן המקורי מתוכו
-            if (item.full_raw_content) {
-              const hrMatch = item.full_raw_content.indexOf('<hr');
-              if (hrMatch !== -1) {
-                const afterHr = item.full_raw_content.substring(hrMatch);
-                const contentDivMatch = afterHr.match(/<div[^>]*style="[^"]*white-space:\s*pre-wrap[^"]*"[^>]*>(.*?)<\/div>/s);
-                if (contentDivMatch && contentDivMatch[1]) {
-                  contentToEdit = contentDivMatch[1].trim();
-                } else {
-                  const nextHr = afterHr.indexOf('<hr', 10);
-                  const closingDiv = afterHr.indexOf('</div>');
-                  const endIndex = nextHr !== -1 ? nextHr : closingDiv;
-                  
-                  if (endIndex !== -1) {
-                    const contentSection = afterHr.substring(0, endIndex);
-                    contentToEdit = contentSection
-                      .replace(/^[^<]*<div[^>]*>/, '')
-                      .replace(/<\/div>.*$/, '')
-                      .trim();
-                  }
-                }
-              }
-            }
+            let contentToEdit = (fullContent.length > rawContent.length) ? fullContent : rawContent;
             
-            // ✅ אם עדיין אין תוכן, השתמש ב-content המקורי
-            if (!contentToEdit && item.content) {
-              contentToEdit = item.content;
-            }
+            // ניקוי עטיפות div בלבד (ללא חיתוך תוכן)
+            contentToEdit = contentToEdit
+              .replace(/^<div dir="rtl"[^>]*><div[^>]*>/i, '')
+              .replace(/<div dir="rtl">/i, '')
+              .replace(/<\/div><\/div>$/i, '')
+              .replace(/<\/div>$/i, '')
+              .trim();
             
             setFormData({
               workspace_id: item.workspace_id || undefined,
@@ -286,7 +269,7 @@ const ItemEditor: React.FC = () => {
         </Box>
 
         <ToggleButtonGroup
-          value={formData.content_type || 'knowledge'}
+          value={formData.content_type || 'knowledge_item'}
           exclusive
           onChange={(_, newValue) => {
             if (newValue) {
@@ -306,7 +289,7 @@ const ItemEditor: React.FC = () => {
           }}
         >
           <ToggleButton value="meeting">סיכום פגישה</ToggleButton>
-          <ToggleButton value="knowledge">פריט ידע</ToggleButton>
+          <ToggleButton value="knowledge_item">פריט ידע</ToggleButton>
           <ToggleButton value="work_log">יומן עבודה</ToggleButton>
         </ToggleButtonGroup>
 

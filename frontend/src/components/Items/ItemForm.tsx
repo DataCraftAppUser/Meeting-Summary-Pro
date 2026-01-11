@@ -198,7 +198,7 @@ export default function ItemForm({
   const getSection1Label = () => {
     switch (formData.content_type) {
       case 'work_log': return 'פרטי יומן העבודה';
-      case 'knowledge': return 'פרטי פריט הידע';
+      case 'knowledge_item': return 'פרטי פריט הידע';
       default: return 'פרטי פגישה';
     }
   };
@@ -206,7 +206,7 @@ export default function ItemForm({
   const getSection2Label = () => {
     switch (formData.content_type) {
       case 'work_log': return 'תוכן יומן העבודה';
-      case 'knowledge': return 'תוכן פריט הידע';
+      case 'knowledge_item': return 'תוכן פריט הידע';
       default: return 'תוכן הפגישה';
     }
   };
@@ -376,7 +376,7 @@ export default function ItemForm({
                 </Grid>
 
                 {/* שעה */}
-                {formData.content_type !== 'knowledge' && formData.content_type !== 'work_log' && (
+                {formData.content_type !== 'knowledge_item' && formData.content_type !== 'work_log' && (
                   <Grid item xs={12} sm={6} md={3}>
                     <TimePicker
                       label="שעה"
@@ -408,7 +408,7 @@ export default function ItemForm({
               )}
 
               {/* משתתפים */}
-              {formData.content_type !== 'knowledge' && (
+              {formData.content_type !== 'knowledge_item' && (
                 <Grid item xs={12}>
                   <Autocomplete
                     multiple

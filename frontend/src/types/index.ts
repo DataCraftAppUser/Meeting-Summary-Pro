@@ -76,39 +76,40 @@ export interface Item {
   meeting_date: string;
   meeting_time?: string;
   participants?: string[];
-  content_type?: 'meeting' | 'work_log' | 'knowledge';
-  content: string;
-  processed_content?: string;
-  full_raw_content?: string;
-  action_items?: ActionItem[];
-  follow_up_required?: boolean;
-  follow_up_date?: string;
-  follow_up_time?: string;
-  follow_up_tbd?: boolean;
-  is_processed_manually_updated?: boolean;
-  status: 'draft' | 'final' | 'archived' | 'processing' | 'processed';
-  created_at: string;
-  updated_at: string;
-  last_edited_at?: string;
-  workspaces?: {
-    id: string;
-    name: string;
-  };
-  topics?: {
-    id: string;
-    name: string;
-  };
-}
-
-export interface ItemFormData {
-  workspace_id?: string;
-  topic_id?: string;
-  title: string;
-  meeting_date: string;
-  meeting_time?: string;
-  participants?: string[];
-  content_type?: 'meeting' | 'work_log' | 'knowledge';
-  content: string;
+    content_type?: 'meeting' | 'work_log' | 'knowledge_item';
+    content: string;
+    processed_content?: string;
+    full_raw_content?: string;
+    action_items?: ActionItem[];
+    follow_up_required?: boolean;
+    follow_up_date?: string;
+    follow_up_time?: string;
+    follow_up_tbd?: boolean;
+    is_processed_manually_updated?: boolean;
+    processed_by?: string;
+    status: 'draft' | 'final' | 'archived' | 'processing' | 'processed';
+    created_at: string;
+    updated_at: string;
+    last_edited_at?: string;
+    workspaces?: {
+      id: string;
+      name: string;
+    };
+    topics?: {
+      id: string;
+      name: string;
+    };
+  }
+  
+  export interface ItemFormData {
+    workspace_id?: string;
+    topic_id?: string;
+    title: string;
+    meeting_date: string;
+    meeting_time?: string;
+    participants?: string[];
+    content_type?: 'meeting' | 'work_log' | 'knowledge_item';
+    content: string;
   processed_content?: string;
   full_raw_content?: string;
   action_items?: ActionItem[];

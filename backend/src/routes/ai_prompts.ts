@@ -28,23 +28,29 @@ router.get('/', async (req, res, next) => {
 
 /**
  * PUT /api/prompts/:id
- * Update a specific prompt's content
+ * Update a specific prompt's content and configuration
  */
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { content } = req.body;
+    const { content, configuration, name, description } = req.body;
     
-    if (!content) {
-      throw new AppError('Prompt content is required', 400);
+    if (!content && !configuration && !name && !description) {
+      throw new AppError('At least one field to update is required', 400);
     }
+    
+    const updateData: any = { 
+      updated_at: new Date().toISOString()
+    };
+    
+    if (content !== undefined) updateData.content = content;
+    if (configuration !== undefined) updateData.configuration = configuration;
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
     
     const { data, error } = await supabase
       .from('ai_prompts')
-      .update({ 
-        content,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

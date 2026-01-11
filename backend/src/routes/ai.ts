@@ -4,7 +4,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { processMeetingSummary, translateMeeting, enrichMeetingContent, testGeminiConnection } from '../services/gemini';
+import { processMeetingSummary, translateMeeting, testGeminiConnection } from '../services/gemini';
 import { AppError, asyncHandler } from '../middleware/errorHandler';
 import rateLimit from 'express-rate-limit';
 
@@ -53,26 +53,6 @@ router.post(
     res.json({
       success: true,
       data: { translated, language },
-    });
-  })
-);
-
-// POST /api/ai/enrich - העשרת טקסט כללי
-router.post(
-  '/enrich',
-  aiLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { content } = req.body;
-
-    if (!content) {
-      throw new AppError('Content is required', 400);
-    }
-
-    const enriched = await enrichMeetingContent(content);
-
-    res.json({
-      success: true,
-      data: { enriched },
     });
   })
 );
