@@ -4,6 +4,32 @@
 
 BEGIN;
 
+-- 0. Ensure missing columns exist in PROD (compatibility fix)
+DO $$
+BEGIN
+    -- Ensure company exists in workspaces
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'workspaces' AND column_name = 'company') THEN
+        ALTER TABLE workspaces ADD COLUMN company VARCHAR(255);
+        RAISE NOTICE '✅ Column "company" added to "workspaces"';
+    END IF;
+
+    -- Ensure hourly_rate exists in topics
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'topics' AND column_name = 'hourly_rate') THEN
+        ALTER TABLE topics ADD COLUMN hourly_rate DECIMAL(10,2);
+        RAISE NOTICE '✅ Column "hourly_rate" added to "topics"';
+    END IF;
+
+    -- Ensure estimated_hours exists in topics
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'topics' AND column_name = 'estimated_hours') THEN
+        ALTER TABLE topics ADD COLUMN estimated_hours DECIMAL(10,2);
+    END IF;
+
+    -- Ensure budget_amount exists in topics
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'topics' AND column_name = 'budget_amount') THEN
+        ALTER TABLE topics ADD COLUMN budget_amount DECIMAL(10,2);
+    END IF;
+END $$;
+
 -- 1. Add processed_by column to items table
 DO $$
 BEGIN
