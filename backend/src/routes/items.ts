@@ -207,31 +207,40 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
       updateData.topic_id = null;
     }
 
-    // ✅ תיקון חדש: שלוף את שם הנושא מה-DB
+    // ✅ תיקון חדש: שלוף את המידע הקיים כדי להשלים שדות חסרים ב-buildFullRawContent
+    const { data: item } = await supabase
+      .from('items')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (!item) throw new AppError('פריט לא נמצא', 404);
+
     let topic_name = null;
-    if (updateData.topic_id) {
+    const topic_id = updateData.topic_id || item.topic_id;
+    if (topic_id) {
       const { data: topicData } = await supabase
         .from('topics')
         .select('name')
-        .eq('id', updateData.topic_id)
+        .eq('id', topic_id)
         .single();
       topic_name = topicData?.name;
     }
 
     // בניית full_raw_content מחדש
-    if (updateData.title || updateData.content) {
+    if (updateData.title || updateData.content || updateData.topic_id) {
       updateData.full_raw_content = buildFullRawContent({
-        title: updateData.title,
-        meeting_date: updateData.meeting_date,
-        meeting_time: updateData.meeting_time,
-        topic_name, // ← עכשיו זה מגיע מה-DB!
-        participants: updateData.participants,
-        content: updateData.content,
-        action_items: updateData.action_items,
-        follow_up_required: updateData.follow_up_required,
-        follow_up_date: updateData.follow_up_date,
-        follow_up_time: updateData.follow_up_time,
-        follow_up_tbd: updateData.follow_up_tbd,
+        title: updateData.title || item.title,
+        meeting_date: updateData.meeting_date || item.meeting_date,
+        meeting_time: updateData.meeting_time || item.meeting_time,
+        topic_name,
+        participants: updateData.participants || item.participants,
+        content: updateData.content || item.content,
+        action_items: updateData.action_items || item.action_items,
+        follow_up_required: updateData.follow_up_required !== undefined ? updateData.follow_up_required : item.follow_up_required,
+        follow_up_date: updateData.follow_up_date !== undefined ? updateData.follow_up_date : item.follow_up_date,
+        follow_up_time: updateData.follow_up_time !== undefined ? updateData.follow_up_time : item.follow_up_time,
+        follow_up_tbd: updateData.follow_up_tbd !== undefined ? updateData.follow_up_tbd : item.follow_up_tbd,
       });
     }
 
