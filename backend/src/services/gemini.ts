@@ -272,7 +272,7 @@ export const translateMeeting = async (
  */
 export const testGeminiConnection = async (): Promise<boolean> => {
   try {
-    const model = await getModel();
+    const { model } = await getModel();
     const result = await model.generateContent('Hello, respond with OK if you work.');
     const response = await result.response;
     const text = response.text();
