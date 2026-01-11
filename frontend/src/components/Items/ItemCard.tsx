@@ -8,9 +8,7 @@ import {
   Box,
   IconButton,
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Item } from '../../types';
 import { formatDate, formatTimeAgo } from '../../utils/dateUtils';
 import { truncateText, stripHtml } from '../../utils/helpers';
@@ -62,6 +60,7 @@ export default function ItemCard({ item, onDelete }: ItemCardProps) {
 
   return (
     <Card
+      onClick={() => navigate(`/items/${item.id}`)}
       sx={{
         height: '100%',
         display: 'flex',
@@ -92,7 +91,6 @@ export default function ItemCard({ item, onDelete }: ItemCardProps) {
           <Typography
             variant="h6"
             component="div"
-            onClick={() => navigate(`/items/${item.id}`)}
             sx={{
               fontWeight: 600,
               fontSize: '1.125rem',
@@ -202,68 +200,25 @@ export default function ItemCard({ item, onDelete }: ItemCardProps) {
           >
             <IconButton
               size="small"
-              color="primary"
+              color="error"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/items/${item.id}`);
+                onDelete(item.id);
               }}
               sx={{
                 p: 0.5,
                 borderRadius: 1,
                 '&:hover': {
-                  backgroundColor: 'rgba(26, 54, 93, 0.04)',
+                  backgroundColor: 'rgba(229, 62, 62, 0.04)',
                 },
               }}
+              title="מחיקה"
             >
-              <VisibilityIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/items/${item.id}/edit`);
-              }}
-              sx={{
-                p: 0.5,
-                borderRadius: 1,
-                '&:hover': {
-                  backgroundColor: 'rgba(26, 54, 93, 0.04)',
-                },
-              }}
-            >
-              <EditIcon sx={{ fontSize: 16 }} />
+              <DeleteIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Box>
         </Box>
       </CardContent>
-
-      <Box
-        sx={{
-          p: 2,
-          pt: 0,
-          display: 'flex',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <IconButton
-          size="small"
-          color="error"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(item.id);
-          }}
-          sx={{
-            borderRadius: 1,
-            '&:hover': {
-              backgroundColor: 'rgba(229, 62, 62, 0.04)',
-            },
-          }}
-          title="מחיקה"
-        >
-          <DeleteIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-      </Box>
     </Card>
   );
 }
