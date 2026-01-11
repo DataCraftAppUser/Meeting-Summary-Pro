@@ -5,6 +5,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppError } from '../middleware/errorHandler';
+import { supabase } from '../config/supabase';
 import PROMPTS from './prompts';
 
 // Validate API key
@@ -32,6 +33,29 @@ async function getModel() {
     }
   }
   throw new Error('No compatible Gemini models found. Check your API key and quota.');
+}
+
+/**
+ * Get prompt content from database or fallback to static prompts
+ */
+async function getPromptContent(id: string): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('ai_prompts')
+      .select('content')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      console.warn(`⚠️ Prompt ${id} not found in DB, falling back to static prompt.`);
+      return PROMPTS[id as keyof typeof PROMPTS] || '';
+    }
+
+    return data.content;
+  } catch (err) {
+    console.error(`❌ Error fetching prompt ${id} from DB:`, err);
+    return PROMPTS[id as keyof typeof PROMPTS] || '';
+  }
 }
 
 // ================================================================
@@ -103,7 +127,8 @@ export const processMeetingSummary = async (content: string): Promise<string> =>
     console.log('📝 Content length:', content.length, 'characters');
     
     const model = await getModel();
-    const prompt = PROMPTS.PROCESS.replace('{content}', content);
+    const promptTemplate = await getPromptContent('PROCESS');
+    const prompt = promptTemplate.replace('{content}', content);
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -190,7 +215,8 @@ export const enrichMeetingContent = async (content: string): Promise<string> => 
       throw new AppError('Content is too short to enrich', 400);
     }
 
-    const prompt = PROMPTS.ENRICH.replace('{content}', content);
+    const promptTemplate = await getPromptContent('ENRICH');
+    const prompt = promptTemplate.replace('{content}', content);
 
     const model = await getModel();
     const result = await model.generateContent(prompt);

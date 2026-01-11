@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkspaces } from '../hooks/useWorkspaces';
 import { useTopics } from '../hooks/useTopics';
+import { usePrompts } from '../hooks/usePrompts';
 import Loading from '../components/Common/Loading';
 import ManageEntitiesDialog from '../components/Common/ManageEntitiesDialog';
 
@@ -9,12 +10,14 @@ export default function Settings() {
   const navigate = useNavigate();
   const { workspaces, loading: loadingWorkspaces, fetchWorkspaces, createWorkspace, updateWorkspace, deleteWorkspace } = useWorkspaces();
   const { topics, loading: loadingTopics, fetchTopics, createTopic, updateTopic, deleteTopic } = useTopics();
+  const { prompts, loading: loadingPrompts, fetchPrompts, updatePrompt } = usePrompts();
 
   const [dialogOpen, setDialogOpen] = useState(true); // נפתח אוטומטית
 
   useEffect(() => {
     fetchWorkspaces();
     fetchTopics();
+    fetchPrompts();
   }, []);
 
   // Wrapper functions for the dialog
@@ -92,9 +95,23 @@ export default function Settings() {
     }
   };
 
+  const handlePromptUpdate = async (id: string, content: string): Promise<boolean> => {
+    try {
+      const success = await updatePrompt(id, content);
+      if (success) {
+        await fetchPrompts();
+      }
+      return success;
+    } catch (error) {
+      console.error('Error updating prompt:', error);
+      return false;
+    }
+  };
+
   const handleUpdate = () => {
     fetchWorkspaces();
     fetchTopics();
+    fetchPrompts();
   };
 
   const handleClose = () => {
@@ -103,7 +120,7 @@ export default function Settings() {
     navigate('/items');
   };
 
-  if (loadingWorkspaces || loadingTopics) {
+  if (loadingWorkspaces || loadingTopics || loadingPrompts) {
     return <Loading />;
   }
 
@@ -113,12 +130,14 @@ export default function Settings() {
       onClose={handleClose}
       workspaces={workspaces}
       topics={topics}
+      prompts={prompts}
       onWorkspaceEdit={handleWorkspaceEdit}
       onWorkspaceDelete={handleWorkspaceDelete}
       onWorkspaceCreate={handleWorkspaceCreate}
       onTopicEdit={handleTopicEdit}
       onTopicDelete={handleTopicDelete}
       onTopicCreate={handleTopicCreate}
+      onPromptUpdate={handlePromptUpdate}
       onUpdate={handleUpdate}
     />
   );

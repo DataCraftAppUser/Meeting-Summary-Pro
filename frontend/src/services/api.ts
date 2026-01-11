@@ -191,6 +191,18 @@ class ApiService {
     return response.data.data || response.data;
   }
 
+  // ==================== AI PROMPTS ====================
+
+  async getPrompts(): Promise<any[]> {
+    const response = await this.api.get('/api/prompts');
+    return response.data;
+  }
+
+  async updatePrompt(id: string, content: string): Promise<any> {
+    const response = await this.api.put(`/api/prompts/${id}`, { content });
+    return response.data;
+  }
+
   // ==================== HEALTH CHECK ====================
 
   async healthCheck(): Promise<{ status: string; timestamp: string }> {

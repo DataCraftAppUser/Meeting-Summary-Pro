@@ -29,21 +29,26 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import BusinessIcon from '@mui/icons-material/Business';
 import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
+import SaveIcon from '@mui/icons-material/Save';
 import { Workspace, Topic } from '../../types';
+import { Prompt } from '../../hooks/usePrompts';
 
 interface ManageEntitiesDialogProps {
   open: boolean;
   onClose: () => void;
   workspaces: Workspace[];
   topics: Topic[];
+  prompts: Prompt[];
   onWorkspaceEdit: (id: string, name: string) => Promise<boolean>;
   onWorkspaceDelete: (id: string) => Promise<boolean>;
   onWorkspaceCreate: (name: string) => Promise<boolean>;
   onTopicEdit: (id: string, name: string) => Promise<boolean>;
   onTopicDelete: (id: string) => Promise<boolean>;
   onTopicCreate: (name: string, workspaceId: string) => Promise<boolean>;
+  onPromptUpdate: (id: string, content: string) => Promise<boolean>;
   onUpdate: () => void;
 }
 
@@ -52,12 +57,14 @@ export default function ManageEntitiesDialog({
   onClose,
   workspaces,
   topics,
+  prompts,
   onWorkspaceEdit,
   onWorkspaceDelete,
   onWorkspaceCreate,
   onTopicEdit,
   onTopicDelete,
   onTopicCreate,
+  onPromptUpdate,
   onUpdate,
 }: ManageEntitiesDialogProps) {
   const [tabValue, setTabValue] = useState(0);
@@ -65,6 +72,7 @@ export default function ManageEntitiesDialog({
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [editPromptContent, setEditPromptContent] = useState('');
   const [newName, setNewName] = useState('');
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState('');
   const [currentEntity, setCurrentEntity] = useState<Workspace | Topic | null>(null);
@@ -72,23 +80,33 @@ export default function ManageEntitiesDialog({
   const [processing, setProcessing] = useState(false);
 
   // ✏️ פתיחת עריכה inline
-  const handleStartEdit = (entity: Workspace | Topic) => {
+  const handleStartEdit = (entity: Workspace | Topic | Prompt) => {
     setEditingId(entity.id);
-    setEditName(entity.name);
+    if ('content' in entity) {
+      setEditPromptContent(entity.content);
+    } else {
+      setEditName(entity.name);
+    }
   };
 
   // ✅ שמירת עריכה inline
-  const handleSaveEdit = async (entity: Workspace | Topic, type: 'workspace' | 'topic') => {
-    if (!editName.trim()) {
-      setEditingId(null);
-      return;
-    }
-
+  const handleSaveEdit = async (entity: Workspace | Topic | Prompt, type: 'workspace' | 'topic' | 'prompt') => {
     setProcessing(true);
-    const success =
-      type === 'workspace'
+    let success = false;
+    
+    if (type === 'prompt') {
+      success = await onPromptUpdate(entity.id, editPromptContent);
+    } else {
+      if (!editName.trim()) {
+        setEditingId(null);
+        setProcessing(false);
+        return;
+      }
+      success = type === 'workspace'
         ? await onWorkspaceEdit(entity.id, editName.trim())
         : await onTopicEdit(entity.id, editName.trim());
+    }
+    
     setProcessing(false);
 
     if (success) {
@@ -247,6 +265,11 @@ export default function ManageEntitiesDialog({
               icon={<FolderSpecialIcon sx={{ mb: 0.5 }} />}
               iconPosition="start"
               label={`נושאים (${topics.length})`}
+            />
+            <Tab
+              icon={<AutoFixHighIcon sx={{ mb: 0.5 }} />}
+              iconPosition="start"
+              label={`פרומפטים (${prompts.length})`}
             />
           </Tabs>
         </Box>
@@ -556,6 +579,121 @@ export default function ManageEntitiesDialog({
                     נושא חדש
                   </Button>
                 </Box>
+              </Box>
+            </Slide>
+          )}
+
+          {/* טאב פרומפטים */}
+          {tabValue === 2 && (
+            <Slide direction="up" in={tabValue === 2} mountOnEnter unmountOnExit>
+              <Box>
+                {prompts.length === 0 ? (
+                  <Box sx={{ p: 6, textAlign: 'center' }}>
+                    <AutoFixHighIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
+                    <Typography color="text.secondary" variant="body1">
+                      אין פרומפטים זמינים
+                    </Typography>
+                  </Box>
+                ) : (
+                  <List sx={{ pt: 0 }}>
+                    {prompts.map((prompt, index) => (
+                      <React.Fragment key={prompt.id}>
+                        <ListItem
+                          sx={{
+                            py: 2.5,
+                            px: 3,
+                            flexDirection: 'column',
+                            alignItems: 'stretch',
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              backgroundColor: '#f5f5f5',
+                            },
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Box>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                {prompt.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {prompt.description}
+                              </Typography>
+                            </Box>
+                            {editingId !== prompt.id && (
+                              <IconButton
+                                size="small"
+                                onClick={() => handleStartEdit(prompt)}
+                                sx={{ color: 'primary.main' }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </Box>
+
+                          {editingId === prompt.id ? (
+                            <Box sx={{ mt: 1 }}>
+                              <TextField
+                                fullWidth
+                                multiline
+                                minRows={10}
+                                maxRows={20}
+                                value={editPromptContent}
+                                onChange={(e) => setEditPromptContent(e.target.value)}
+                                variant="outlined"
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    backgroundColor: 'white',
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.85rem',
+                                  },
+                                }}
+                              />
+                              <Stack direction="row" spacing={1} sx={{ mt: 2, justifyContent: 'flex-end' }}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={handleCancelEdit}
+                                  disabled={processing}
+                                  startIcon={<CancelIcon />}
+                                >
+                                  ביטול
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={() => handleSaveEdit(prompt, 'prompt')}
+                                  disabled={processing}
+                                  startIcon={<SaveIcon />}
+                                >
+                                  {processing ? 'שומר...' : 'שמור שינויים'}
+                                </Button>
+                              </Stack>
+                            </Box>
+                          ) : (
+                            <Paper
+                              variant="outlined"
+                              sx={{
+                                p: 1.5,
+                                backgroundColor: '#fdfdfd',
+                                maxHeight: 150,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'pre-wrap',
+                                fontSize: '0.8rem',
+                                color: 'text.secondary',
+                                cursor: 'pointer',
+                              }}
+                              onClick={() => handleStartEdit(prompt)}
+                            >
+                              {prompt.content}
+                            </Paper>
+                          )}
+                        </ListItem>
+                        {index < prompts.length - 1 && <Divider />}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                )}
               </Box>
             </Slide>
           )}
