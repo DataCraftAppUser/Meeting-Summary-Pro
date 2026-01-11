@@ -140,7 +140,10 @@ export default function ItemList({
             <TableRow
               key={item.id}
               hover
-              onClick={() => navigate(`/items/${item.id}`)}
+              onClick={() => {
+                const hubId = window.location.pathname.split('/')[2];
+                navigate(hubId ? `/hub/${hubId}/items/${item.id}` : `/items/${item.id}`);
+              }}
               sx={{
                 cursor: 'pointer',
                 '&:hover': {

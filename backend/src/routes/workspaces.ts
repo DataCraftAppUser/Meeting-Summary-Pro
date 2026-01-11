@@ -6,16 +6,23 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { AppError, asyncHandler } from '../middleware/errorHandler';
+import { verifyHubAccess } from '../middleware/hubAccess';
 
 const router = Router();
 
-// GET /api/workspaces - כל ה-Workspaces
+// GET /api/workspaces - כל ה-Workspaces של Hub מסוים (requires hub_id in query)
 router.get(
   '/',
+  verifyHubAccess,
   asyncHandler(async (req: Request, res: Response) => {
+    const hubId = (req as any).hubId || req.query.hub_id;
     const { search, sort = 'name', order = 'asc' } = req.query;
 
-    let query = supabase.from('workspaces').select('*');
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
+
+    let query = supabase.from('workspaces').select('*').eq('hub_id', hubId);
 
     if (search) {
       query = query.ilike('name', `%${search}%`);
@@ -51,11 +58,17 @@ router.get(
   })
 );
 
-// POST /api/workspaces - יצירת Workspace
+// POST /api/workspaces - יצירת Workspace (requires hub_id in body)
 router.post(
   '/',
+  verifyHubAccess,
   asyncHandler(async (req: Request, res: Response) => {
+    const hubId = (req as any).hubId || req.body.hub_id;
     const { name, email, phone, company, notes } = req.body;
+
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
 
     if (!name) {
       throw new AppError('Workspace name is required', 400);
@@ -63,7 +76,7 @@ router.post(
 
     const { data, error } = await supabase
       .from('workspaces')
-      .insert({ name, email, phone, company, notes })
+      .insert({ hub_id: hubId, name, email, phone, company, notes })
       .select()
       .single();
 

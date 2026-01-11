@@ -12,19 +12,30 @@ export function useItems() {
   const { showToast } = useToast();
 
   const fetchItems = useCallback(
-    async (filters?: ItemFilters) => {
+    async (filters?: ItemFilters & { hub_id?: string }) => {
+      console.log('🔄 fetchItems called with filters:', filters);
       setLoading(true);
       try {
-        const response = await api.getItems({
+        const params = {
           page,
           limit,
           ...filters,
-        });
+        };
+        console.log('📡 Calling api.getItems with params:', params);
+        const response = await api.getItems(params);
+        console.log('📥 API response received:', response);
         setItems(response.data);
         setTotal(response.pagination.total);
+        console.log('✅ Items loaded:', response.data.length, 'items, total:', response.pagination.total);
       } catch (error: any) {
+        console.error('❌ Error fetching items:', error);
+        if (error.response) {
+          console.error('Response status:', error.response.status);
+          console.error('Response data:', error.response.data);
+        } else if (error.request) {
+          console.error('No response received:', error.request);
+        }
         showToast('שגיאה בטעינת פריטים', 'error');
-        console.error('Error fetching items:', error);
       } finally {
         setLoading(false);
       }
@@ -33,10 +44,10 @@ export function useItems() {
   );
 
   const getItem = useCallback(
-    async (id: string): Promise<Item | null> => {
+    async (id: string, hubId: string): Promise<Item | null> => {
       setLoading(true);
       try {
-        const item = await api.getItem(id);
+        const item = await api.getItem(id, hubId);
         console.log('✅ getItem result:', item);
         return item;
       } catch (error: any) {
@@ -51,7 +62,7 @@ export function useItems() {
   );
 
   const createItem = useCallback(
-    async (data: ItemFormData): Promise<Item | null> => {
+    async (data: ItemFormData & { hub_id: string }): Promise<Item | null> => {
       setLoading(true);
       try {
         const response = await api.createItem(data);
@@ -76,7 +87,7 @@ export function useItems() {
   );
 
   const updateItem = useCallback(
-    async (id: string, data: Partial<ItemFormData>): Promise<Item | null> => {
+    async (id: string, data: Partial<ItemFormData> & { hub_id: string }): Promise<Item | null> => {
       setLoading(true);
       try {
         const item = await api.updateItem(id, data);
@@ -103,10 +114,10 @@ export function useItems() {
   );
 
   const deleteItem = useCallback(
-    async (id: string): Promise<boolean> => {
+    async (id: string, hubId: string): Promise<boolean> => {
       setLoading(true);
       try {
-        await api.deleteItem(id);
+        await api.deleteItem(id, hubId);
         showToast('פריט נמחק בהצלחה', 'success');
         return true;
       } catch (error: any) {
@@ -121,9 +132,9 @@ export function useItems() {
   );
 
   const processItem = useCallback(
-    async (itemId: string): Promise<Item | null> => {
+    async (itemId: string, hubId: string): Promise<Item | null> => {
       try {
-        const result = await api.processItem(itemId);
+        const result = await api.processItem(itemId, hubId);
 
         console.log('✅ processItem result:', result);
         const item = (result as any).data || result;
@@ -140,9 +151,9 @@ export function useItems() {
   );
 
   const translateItem = useCallback(
-    async (itemId: string, language: string = 'en') => {
+    async (itemId: string, hubId: string, language: string = 'en') => {
       try {
-        const result = await api.translateItem(itemId, language);
+        const result = await api.translateItem(itemId, hubId, language);
 
         console.log('✅ translateItem result:', result);
         return (result as any).data || result;

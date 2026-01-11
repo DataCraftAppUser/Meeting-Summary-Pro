@@ -9,10 +9,14 @@ export function useTopics() {
   const { showToast } = useToast();
 
   const fetchTopics = useCallback(
-    async (workspaceId?: string) => {
+    async (hubId?: string, workspaceId?: string) => {
       setLoading(true);
       try {
+        if (!hubId) {
+          throw new Error('hub_id is required');
+        }
         const response = await api.getTopics({
+          hub_id: hubId,
           limit: 1000,
           workspace_id: workspaceId,
         });
@@ -45,12 +49,16 @@ export function useTopics() {
   );
 
   const createTopic = useCallback(
-    async (data: TopicFormData): Promise<Topic | null> => {
+    async (data: TopicFormData & { hub_id?: string }, hubId?: string): Promise<Topic | null> => {
       setLoading(true);
       try {
-        const topic = await api.createTopic(data);
+        const hub_id = hubId || data.hub_id;
+        if (!hub_id) {
+          throw new Error('hub_id is required');
+        }
+        const topic = await api.createTopic({ ...data, hub_id });
         showToast('נושא נוצר בהצלחה', 'success');
-        await fetchTopics(data.workspace_id); // Refresh list
+        await fetchTopics(hub_id, data.workspace_id); // Refresh list
         return topic;
       } catch (error: any) {
         showToast('שגיאה ביצירת נושא', 'error');
@@ -64,12 +72,15 @@ export function useTopics() {
   );
 
   const updateTopic = useCallback(
-    async (id: string, data: Partial<TopicFormData>): Promise<Topic | null> => {
+    async (id: string, data: Partial<TopicFormData> & { hub_id?: string }, hubId?: string): Promise<Topic | null> => {
       setLoading(true);
       try {
+        const hub_id = hubId || data.hub_id;
         const topic = await api.updateTopic(id, data);
         showToast('נושא עודכן בהצלחה', 'success');
-        await fetchTopics(data.workspace_id); // Refresh list
+        if (hub_id) {
+          await fetchTopics(hub_id, data.workspace_id); // Refresh list
+        }
         return topic;
       } catch (error: any) {
         showToast('שגיאה בעדכון נושא', 'error');
@@ -83,12 +94,14 @@ export function useTopics() {
   );
 
   const deleteTopic = useCallback(
-    async (id: string): Promise<boolean> => {
+    async (id: string, hubId?: string): Promise<boolean> => {
       setLoading(true);
       try {
         await api.deleteTopic(id);
         showToast('נושא נמחק בהצלחה', 'success');
-        await fetchTopics(); // Refresh list
+        if (hubId) {
+          await fetchTopics(hubId); // Refresh list
+        }
         return true;
       } catch (error: any) {
         showToast('שגיאה במחיקת נושא', 'error');

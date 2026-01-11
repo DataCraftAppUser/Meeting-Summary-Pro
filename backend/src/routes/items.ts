@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 import { AppError } from '../middleware/errorHandler';
+import { verifyHubAccess } from '../middleware/hubAccess';
 import { processMeetingSummary, translateMeeting } from '../services/gemini';
 
 const router = Router();
@@ -38,10 +39,15 @@ const buildFullRawContent = (data: {
   }
 };
 
-// ✅ GET /api/items - קבלת רשימת פריטים
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+// ✅ GET /api/items - קבלת רשימת פריטים (requires hub_id in query)
+router.get('/', verifyHubAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const hubId = (req as any).hubId || req.query.hub_id;
     const { workspace_id, topic_id, status, content_type, search, page = 1, limit = 10 } = req.query;
+
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
 
     let query = supabase
       .from('items')
@@ -49,7 +55,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         *,
         workspaces:workspace_id (id, name),
         topics:topic_id (id, name)
-      `, { count: 'exact' });
+      `, { count: 'exact' })
+      .eq('hub_id', hubId);
 
     if (workspace_id) query = query.eq('workspace_id', workspace_id);
     if (topic_id) query = query.eq('topic_id', topic_id);
@@ -64,6 +71,30 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
     const { data, error, count } = await query;
     if (error) throw new AppError(error.message, 500);
+
+    // Enrich items with creator information from user_profiles
+    if (data && data.length > 0) {
+      const creatorIds = [...new Set(data.map((item: any) => item.created_by).filter(Boolean))];
+      
+      if (creatorIds.length > 0) {
+        const { data: creators } = await supabase
+          .from('user_profiles')
+          .select('id, email, full_name, avatar_url')
+          .in('id', creatorIds);
+
+        // Create a map of creator info
+        const creatorMap = new Map(
+          (creators || []).map((c: any) => [c.id, c])
+        );
+
+        // Add creator info to each item
+        data.forEach((item: any) => {
+          if (item.created_by && creatorMap.has(item.created_by)) {
+            item.creator = creatorMap.get(item.created_by);
+          }
+        });
+      }
+    }
 
     res.json({
       success: true,
@@ -80,10 +111,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// ✅ GET /api/items/:id - קבלת פריט בודד
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+// ✅ GET /api/items/:id - קבלת פריט בודד (requires hub_id in query)
+router.get('/:id', verifyHubAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const hubId = (req as any).hubId || req.query.hub_id;
+
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
 
     const { data, error } = await supabase
       .from('items')
@@ -93,10 +129,24 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
         topics:topic_id (id, name)
       `)
       .eq('id', id)
+      .eq('hub_id', hubId)
       .single();
 
     if (error) throw new AppError(error.message, 500);
     if (!data) throw new AppError('פריט לא נמצא', 404);
+
+    // Enrich item with creator information
+    if (data.created_by) {
+      const { data: creator } = await supabase
+        .from('user_profiles')
+        .select('id, email, full_name, avatar_url')
+        .eq('id', data.created_by)
+        .single();
+
+      if (creator) {
+        data.creator = creator;
+      }
+    }
 
     res.json({ success: true, data });
   } catch (error) {
@@ -104,9 +154,16 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// ✅ POST /api/items - יצירת פריט חדש
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+// ✅ POST /api/items - יצירת פריט חדש (requires hub_id)
+router.post('/', verifyHubAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const hubId = (req as any).hubId || req.body.hub_id;
+    const userId = (req as any).user?.id;
+    
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
+
     const {
       workspace_id,
       topic_id,
@@ -161,6 +218,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     const { data, error } = await supabase
       .from('items')
       .insert({
+        hub_id: hubId,
         workspace_id: cleanWorkspaceId,
         topic_id: cleanTopicId,
         title,
@@ -176,6 +234,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         follow_up_time,
         follow_up_tbd: follow_up_tbd || false,
         status,
+        created_by: userId,
       })
       .select()
       .single();
@@ -193,11 +252,16 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// ✅ PUT /api/items/:id - עדכון פריט
-router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
+// ✅ PUT /api/items/:id - עדכון פריט (requires hub_id)
+router.put('/:id', verifyHubAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const hubId = (req as any).hubId || req.body.hub_id;
     const updateData = { ...req.body };
+
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
 
     // ✅ תיקון: המרת undefined ל-null
     if (updateData.workspace_id === 'undefined' || updateData.workspace_id === undefined) {
@@ -212,6 +276,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
       .from('items')
       .select('*')
       .eq('id', id)
+      .eq('hub_id', hubId)
       .single();
 
     if (!item) throw new AppError('פריט לא נמצא', 404);
@@ -284,12 +349,21 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// ✅ DELETE /api/items/:id - מחיקת פריט
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+// ✅ DELETE /api/items/:id - מחיקת פריט (requires hub_id)
+router.delete('/:id', verifyHubAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const hubId = (req as any).hubId || req.query.hub_id;
 
-    const { error } = await supabase.from('items').delete().eq('id', id);
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
+
+    const { error } = await supabase
+      .from('items')
+      .delete()
+      .eq('id', id)
+      .eq('hub_id', hubId);
 
     if (error) throw new AppError(error.message, 500);
 
@@ -300,22 +374,32 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
 });
 
 // ✅ POST /api/items/:id/process - עיבוד AI
-router.post('/:id/process', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/process', verifyHubAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const hubId = (req as any).hubId || req.body.hub_id || req.query.hub_id;
 
-    console.log('🤖 Processing item:', id);
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
+
+    console.log('🤖 Processing item:', id, 'in hub:', hubId);
 
     const { data: item, error: fetchError } = await supabase
       .from('items')
       .select('*')
       .eq('id', id)
+      .eq('hub_id', hubId)
       .single();
 
     if (fetchError) throw new AppError(fetchError.message, 500);
     if (!item) throw new AppError('פריט לא נמצא', 404);
 
-    await supabase.from('items').update({ status: 'processing' }).eq('id', id);
+    await supabase
+      .from('items')
+      .update({ status: 'processing' })
+      .eq('id', id)
+      .eq('hub_id', hubId);
 
     const result = await processMeetingSummary(
       item.full_raw_content || item.content,
@@ -332,6 +416,7 @@ router.post('/:id/process', async (req: Request, res: Response, next: NextFuncti
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
+      .eq('hub_id', hubId)
       .select()
       .single();
 
@@ -349,6 +434,7 @@ router.post('/:id/process', async (req: Request, res: Response, next: NextFuncti
             updated_at: new Date().toISOString(),
           })
           .eq('id', id)
+          .eq('hub_id', hubId)
           .select()
           .single();
           
@@ -407,10 +493,27 @@ router.post('/:id/translate', async (req: Request, res: Response, next: NextFunc
   }
 });
 
-// ✅ GET /api/items/:id/versions - גרסאות
-router.get('/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
+// ✅ GET /api/items/:id/versions - גרסאות (requires hub_id)
+router.get('/:id/versions', verifyHubAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const hubId = (req as any).hubId || req.query.hub_id;
+
+    if (!hubId) {
+      throw new AppError('hub_id is required', 400);
+    }
+
+    // Verify item belongs to hub
+    const { data: item } = await supabase
+      .from('items')
+      .select('id')
+      .eq('id', id)
+      .eq('hub_id', hubId)
+      .single();
+
+    if (!item) {
+      throw new AppError('Item not found in this hub', 404);
+    }
 
     const { data, error } = await supabase
       .from('item_versions')

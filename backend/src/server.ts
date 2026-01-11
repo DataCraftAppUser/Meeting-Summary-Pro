@@ -23,6 +23,9 @@ import workspacesRouter from './routes/workspaces';
 import topicsRouter from './routes/topics';
 import aiRouter from './routes/ai';
 import aiPromptsRouter from './routes/ai_prompts';
+import authRouter from './routes/auth';
+import hubsRouter from './routes/hubs';
+import adminRouter from './routes/admin';
 
 // Middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -112,6 +115,9 @@ app.get('/health', (req: Request, res: Response) => {
 // API ROUTES
 // ================================================================
 
+app.use('/api/auth', authRouter);
+app.use('/api/hubs', hubsRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/items', itemsRouter);
 app.use('/api/workspaces', workspacesRouter);
 app.use('/api/topics', topicsRouter);

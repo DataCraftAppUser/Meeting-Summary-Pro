@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .log-info { background: #e3f2fd; }
+        .log-success { background: #e8f5e9; }
+        .log-warning { background: #fff3e0; }
+        .log-error { background: #ffebee; }
+        .log-time { background: #f3e5f5; font-weight: bold; }
+        #logs { 
+            border: 1px solid #ddd; 
+            padding: 10px; 
+            border-radius: 8px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px 5px;
+            cursor: pointer;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+            background: #f5f5f5;
+            border-left: 4px solid #2196F3;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 בדיקת ביצועים - Authentication Flow</h1>
+    
+    <div class="stats" id="stats"></div>
+    
+    <div>
+        <button onclick="testAuthFlow()">🔄 בדוק זרימת Authentication</button>
+        <button onclick="testRefresh()">🔃 בדוק F5 (Refresh)</button>
+        <button onclick="clearLogs()">🗑️ נקה לוגים</button>
+    </div>
+    
+    <h3>לוגים:</h3>
+    <div id="logs"></div>
+
+    <script type="module">
+        const logsDiv = document.getElementById('logs');
+        const statsDiv = document.getElementById('stats');
+        let timings = {};
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString('he-IL', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                fractionalSecondDigits: 3 
+            });
+            entry.textContent = `[${timestamp}] ${message}`;
+            logsDiv.appendChild(entry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStats() {
+            statsDiv.innerHTML = '';
+            for (const [key, value] of Object.entries(timings)) {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.innerHTML = `
+                    <div class="stat-value">${value.toFixed(0)}ms</div>
+                    <div class="stat-label">${key}</div>
+                `;
+                statsDiv.appendChild(card);
+            }
+        }
+
+        window.clearLogs = function() {
+            logsDiv.innerHTML = '';
+            timings = {};
+            statsDiv.innerHTML = '';
+        }
+
+        window.testAuthFlow = async function() {
+            log('🚀 מתחיל בדיקת Authentication Flow...', 'info');
+            const totalStart = performance.now();
+            
+            try {
+                // Import Supabase
+                log('📦 טוען Supabase client...', 'info');
+                const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+                
+                const supabaseUrl = 'YOUR_SUPABASE_URL'; // Will be replaced by actual URL
+                const supabaseKey = 'YOUR_SUPABASE_KEY'; // Will be replaced by actual key
+                
+                if (!supabaseUrl || supabaseUrl === 'YOUR_SUPABASE_URL') {
+                    log('❌ Supabase URL לא מוגדר! בדוק את frontend/.env', 'error');
+                    return;
+                }
+                
+                const supabase = createClient(supabaseUrl, supabaseKey);
+                log('✅ Supabase client נטען', 'success');
+                
+                // Test getSession
+                log('🔍 בודק getSession()...', 'info');
+                const sessionStart = performance.now();
+                const { data: { session }, error } = await supabase.auth.getSession();
+                const sessionTime = performance.now() - sessionStart;
+                timings['getSession()'] = sessionTime;
+                
+                if (error) {
+                    log(`❌ שגיאה ב-getSession: ${error.message}`, 'error');
+                    return;
+                }
+                
+                log(`📋 getSession() הושלם ב-${sessionTime.toFixed(0)}ms`, 'time');
+                log(`   יש session: ${!!session}`, session ? 'success' : 'warning');
+                
+                if (session) {
+                    log(`   User email: ${session.user?.email}`, 'info');
+                    log(`   Expires at: ${new Date(session.expires_at * 1000).toLocaleString('he-IL')}`, 'info');
+                    
+                    // Test API calls
+                    log('📡 בודק API call ל-/api/auth/user...', 'info');
+                    const apiStart = performance.now();
+                    
+                    try {
+                        const response = await fetch('http://localhost:5000/api/auth/user', {
+                            headers: {
+                                'Authorization': `Bearer ${session.access_token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        const apiTime = performance.now() - apiStart;
+                        timings['API /auth/user'] = apiTime;
+                        
+                        log(`📥 API response: ${response.status} ${response.statusText} (${apiTime.toFixed(0)}ms)`, 
+                            response.ok ? 'success' : 'error');
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            log(`   User status: ${data.data?.status}`, 'info');
+                            log(`   Is admin: ${data.data?.is_admin}`, 'info');
+                        }
+                    } catch (apiError) {
+                        log(`❌ שגיאה ב-API call: ${apiError.message}`, 'error');
+                    }
+                    
+                    // Test hubs API
+                    log('📡 בודק API call ל-/api/auth/hubs...', 'info');
+                    const hubsStart = performance.now();
+                    
+                    try {
+                        const response = await fetch('http://localhost:5000/api/auth/hubs', {
+                            headers: {
+                                'Authorization': `Bearer ${session.access_token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        const hubsTime = performance.now() - hubsStart;
+                        timings['API /auth/hubs'] = hubsTime;
+                        
+                        log(`📥 Hubs API response: ${response.status} (${hubsTime.toFixed(0)}ms)`, 
+                            response.ok ? 'success' : 'error');
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            log(`   מספר hubs: ${data.data?.length || 0}`, 'info');
+                        }
+                    } catch (hubsError) {
+                        log(`❌ שגיאה ב-hubs API: ${hubsError.message}`, 'error');
+                    }
+                } else {
+                    log('⚠️ אין session פעיל - המשתמש לא מחובר', 'warning');
+                }
+                
+                const totalTime = performance.now() - totalStart;
+                timings['סה"כ זמן'] = totalTime;
+                log(`⏱️ סה"כ זמן בדיקה: ${totalTime.toFixed(0)}ms`, 'time');
+                
+                updateStats();
+                
+            } catch (error) {
+                log(`❌ שגיאה כללית: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        window.testRefresh = function() {
+            log('🔃 מבצע רענון דף (F5)...', 'info');
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+
+        // Auto-run on load
+        log('✅ דף בדיקה נטען. לחץ על הכפתור כדי להתחיל בדיקה.', 'success');
+    </script>
+</body>
+</html>

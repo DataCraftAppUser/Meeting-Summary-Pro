@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -7,11 +7,13 @@ import {
   Chip,
   Box,
   IconButton,
+  Avatar,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Item } from '../../types';
 import { formatDate, formatTimeAgo } from '../../utils/dateUtils';
 import { truncateText, stripHtml } from '../../utils/helpers';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ItemCardProps {
   item: Item;
@@ -20,6 +22,8 @@ interface ItemCardProps {
 
 export default function ItemCard({ item, onDelete }: ItemCardProps) {
   const navigate = useNavigate();
+  const { hub_id } = useParams<{ hub_id?: string }>();
+  const { currentHub } = useAuth();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -60,7 +64,7 @@ export default function ItemCard({ item, onDelete }: ItemCardProps) {
 
   return (
     <Card
-      onClick={() => navigate(`/items/${item.id}`)}
+      onClick={() => navigate(hub_id ? `/hub/${hub_id}/items/${item.id}` : `/items/${item.id}`)}
       sx={{
         height: '100%',
         display: 'flex',
@@ -178,15 +182,36 @@ export default function ItemCard({ item, onDelete }: ItemCardProps) {
             borderColor: 'divider',
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 500,
-            }}
-          >
-            עודכן {formatTimeAgo(item.updated_at)}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {currentHub?.type === 'shared' && item.creator && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 1 }}>
+                <Avatar
+                  src={item.creator.avatar_url}
+                  sx={{ width: 20, height: 20 }}
+                >
+                  {item.creator.full_name?.charAt(0) || item.creator.email?.charAt(0)}
+                </Avatar>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  {item.creator.full_name || item.creator.email}
+                </Typography>
+              </Box>
+            )}
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 500,
+              }}
+            >
+              עודכן {formatTimeAgo(item.updated_at)}
+            </Typography>
+          </Box>
           <Box
             sx={{
               display: 'flex',
