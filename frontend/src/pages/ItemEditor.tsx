@@ -37,7 +37,7 @@ const ItemEditor: React.FC = () => {
     title: '',
     meeting_date: new Date().toISOString().split('T')[0],
     content: '',
-    content_type: 'meeting',
+    content_type: 'knowledge',
     status: 'draft',
   });
 
@@ -286,7 +286,7 @@ const ItemEditor: React.FC = () => {
         </Box>
 
         <ToggleButtonGroup
-          value={formData.content_type || 'meeting'}
+          value={formData.content_type || 'knowledge'}
           exclusive
           onChange={(_, newValue) => {
             if (newValue) {
@@ -305,8 +305,8 @@ const ItemEditor: React.FC = () => {
             }
           }}
         >
-          <ToggleButton value="knowledge">פריט ידע</ToggleButton>
           <ToggleButton value="meeting">סיכום פגישה</ToggleButton>
+          <ToggleButton value="knowledge">פריט ידע</ToggleButton>
           <ToggleButton value="work_log">יומן עבודה</ToggleButton>
         </ToggleButtonGroup>
 
@@ -332,7 +332,7 @@ const ItemEditor: React.FC = () => {
 
       {/* Workspace Dialog */}
       <Dialog open={workspaceDialogOpen} onClose={() => setWorkspaceDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>צור עולם תוכן חדש</DialogTitle>
+        <DialogTitle>צור עולם תוכן/לקוח חדש</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
