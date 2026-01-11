@@ -30,6 +30,7 @@ export default function ItemsList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('');
+  const [selectedContentType, setSelectedContentType] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -54,11 +55,12 @@ export default function ItemsList() {
         search: searchQuery || undefined,
         workspace_id: selectedWorkspace || undefined,
         topic_id: selectedTopic || undefined,
+        content_type: selectedContentType || undefined,
       });
     } catch (err) {
       setError(true);
     }
-  }, [fetchItems, searchQuery, selectedWorkspace, selectedTopic]);
+  }, [fetchItems, searchQuery, selectedWorkspace, selectedTopic, selectedContentType]);
 
   useEffect(() => {
     loadData();
@@ -90,6 +92,11 @@ export default function ItemsList() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleWorkspaceChange = (value: string) => {
+    setSelectedWorkspace(value);
+    setSelectedTopic(''); // איפוס הנושא בעת החלפת לקוח
+  };
+
   if (error) {
     return <ErrorMessage onRetry={loadData} />;
   }
@@ -97,79 +104,88 @@ export default function ItemsList() {
   return (
     <Container maxWidth="xl">
       <Box
-        mb={6}
+        mb={4}
         display="flex"
         justifyContent="space-between"
         alignItems="center"
         sx={{
           background: 'white',
           borderRadius: 3,
-          p: 4,
+          py: 2,
+          px: 4,
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
           border: '1px solid rgba(226, 232, 240, 0.8)',
         }}
       >
         <Box>
           <Typography
-            variant="h3"
-            component="h1"
-            gutterBottom
-            fontWeight={700}
+            variant="h6"
             sx={{
-              background: 'linear-gradient(135deg, #1a365d 0%, #2d3748 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 2,
+              color: '#64748b',
+              fontWeight: 400,
+              lineHeight: 1.6,
             }}
           >
-            פריטים
-          </Typography>
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{ fontWeight: 400, lineHeight: 1.6 }}
-          >
-            נהל את כל הפריטים שלך במקום אחד עם AI מתקדם
+            הבית של התובנות, יומני העבודה והסיכומים שלך. {' '}
+            <Box component="span" sx={{ fontWeight: 600, color: '#38b2ac' }}>
+              פשוט.
+            </Box>
+            {' '}
+            <Box component="span" sx={{ fontWeight: 600, color: '#1a365d' }}>
+              חכם.
+            </Box>
+            {' '}
+            <Box 
+              component="span" 
+              sx={{ 
+                fontWeight: 700, 
+                color: '#d32f2f',
+                textShadow: '0 0 20px rgba(211, 47, 47, 0.1)'
+              }}
+            >
+              מבוסס AI.
+            </Box>
           </Typography>
         </Box>
 
-        {/* ✨ כפתורי החלפת תצוגה */}
-        <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={handleViewModeChange}
-          aria-label="תצוגה"
-          size="medium"
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            borderRadius: 2,
-            p: 0.5,
-            '& .MuiToggleButton-root': {
+        <Box display="flex" alignItems="center" gap={3}>
+          {/* ✨ כפתורי החלפת תצוגה */}
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={handleViewModeChange}
+            aria-label="תצוגה"
+            size="medium"
+            sx={{
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
               borderRadius: 2,
-              mx: 0.5,
-              px: 2,
-              py: 1,
-              border: 'none',
-              '&.Mui-selected': {
-                backgroundColor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
+              p: 0.5,
+              '& .MuiToggleButton-root': {
+                borderRadius: 2,
+                mx: 0.5,
+                px: 2,
+                py: 1,
+                border: 'none',
+                '&.Mui-selected': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                  },
                 },
               },
-            },
-          }}
-        >
-          <ToggleButton value="grid" aria-label="תצוגת כרטיסים">
-            <ViewModuleIcon sx={{ mr: 1 }} />
-            כרטיסים
-          </ToggleButton>
-          <ToggleButton value="table" aria-label="תצוגת טבלה">
-            <ViewListIcon sx={{ mr: 1 }} />
-            טבלה
-          </ToggleButton>
-        </ToggleButtonGroup>
+            }}
+          >
+            <ToggleButton value="grid" aria-label="תצוגת כרטיסים">
+              <ViewModuleIcon sx={{ mr: 1 }} />
+              כרטיסים
+            </ToggleButton>
+            <ToggleButton value="table" aria-label="תצוגת טבלה">
+              <ViewListIcon sx={{ mr: 1 }} />
+              טבלה
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       <Box
@@ -186,11 +202,13 @@ export default function ItemsList() {
           searchQuery={searchQuery}
           selectedWorkspace={selectedWorkspace}
           selectedTopic={selectedTopic}
+          selectedContentType={selectedContentType}
           workspaces={workspaces}
           topics={topics}
           onSearchChange={setSearchQuery}
-          onWorkspaceChange={setSelectedWorkspace}
+          onWorkspaceChange={handleWorkspaceChange}
           onTopicChange={setSelectedTopic}
+          onContentTypeChange={setSelectedContentType}
         />
       </Box>
 

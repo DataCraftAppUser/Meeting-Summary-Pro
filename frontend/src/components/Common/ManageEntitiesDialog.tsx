@@ -193,7 +193,7 @@ export default function ManageEntitiesDialog({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <BusinessIcon sx={{ fontSize: 28 }} />
             <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-              ניהול Workspaces ונושאים
+              ניהול עולמות תוכן ונושאים
             </Typography>
           </Box>
           <IconButton
@@ -261,10 +261,10 @@ export default function ManageEntitiesDialog({
                   <Box sx={{ p: 6, textAlign: 'center' }}>
                     <BusinessIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
                     <Typography color="text.secondary" variant="body1">
-                      אין Workspaces עדיין
+                      אין עולמות תוכן עדיין
                     </Typography>
                     <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
-                      לחץ על "Workspace חדש" כדי להתחיל
+                      לחץ על "עולם תוכן חדש" כדי להתחיל
                     </Typography>
                   </Box>
                 ) : (
@@ -576,11 +576,11 @@ export default function ManageEntitiesDialog({
         }}
       >
         <DialogTitle sx={{ pb: 1 }}>
-          מחיקת {entityType === 'workspace' ? 'Workspace' : 'נושא'}
+          מחיקת {entityType === 'workspace' ? 'עולם תוכן' : 'נושא'}
         </DialogTitle>
         <DialogContent>
           <Typography>
-            האם אתה בטוח שברצונך למחוק את {entityType === 'workspace' ? 'ה-Workspace' : 'הנושא'} "
+            האם אתה בטוח שברצונך למחוק את {entityType === 'workspace' ? 'עולם התוכן' : 'הנושא'} "
             {currentEntity?.name}"?
           </Typography>
           <Typography color="error" sx={{ mt: 1, fontSize: '0.9rem' }}>
@@ -614,39 +614,41 @@ export default function ManageEntitiesDialog({
         }}
       >
         <DialogTitle sx={{ pb: 1 }}>
-          {tabValue === 0 ? 'Workspace חדש' : 'נושא חדש'}
+          {tabValue === 0 ? 'עולם תוכן חדש' : 'נושא חדש'}
         </DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label={tabValue === 0 ? 'שם Workspace' : 'שם נושא'}
-            fullWidth
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleSaveCreate();
-              }
-            }}
-            sx={{ mb: tabValue === 1 ? 2 : 0 }}
-          />
-          {tabValue === 1 && (
-            <FormControl fullWidth margin="dense">
-              <InputLabel>Workspace</InputLabel>
-              <Select
-                value={selectedWorkspaceId}
-                onChange={(e) => setSelectedWorkspaceId(e.target.value)}
-                label="Workspace"
-              >
-                {workspaces.map((workspace) => (
-                  <MenuItem key={workspace.id} value={workspace.id}>
-                    {workspace.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
+          <Box sx={{ mt: 1 }}>
+            <TextField
+              autoFocus
+              margin="dense"
+              label={tabValue === 0 ? 'שם עולם תוכן' : 'שם נושא'}
+              fullWidth
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSaveCreate();
+                }
+              }}
+              sx={{ mb: tabValue === 1 ? 2 : 0 }}
+            />
+            {tabValue === 1 && (
+              <FormControl fullWidth margin="dense">
+                <InputLabel>עולם תוכן</InputLabel>
+                <Select
+                  value={selectedWorkspaceId}
+                  onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+                  label="עולם תוכן"
+                >
+                  {workspaces.map((workspace) => (
+                    <MenuItem key={workspace.id} value={workspace.id}>
+                      {workspace.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
         </DialogContent>
         <Stack direction="row" spacing={2} sx={{ p: 2, justifyContent: 'flex-end' }}>
           <Button onClick={() => setCreateDialogOpen(false)}>ביטול</Button>

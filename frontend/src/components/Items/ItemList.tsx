@@ -41,6 +41,8 @@ export default function ItemList({
     switch (status) {
       case 'draft':
         return 'default';
+      case 'processing':
+        return 'warning';
       case 'processed':
         return 'info';
       case 'final':
@@ -56,8 +58,10 @@ export default function ItemList({
     switch (status) {
       case 'draft':
         return 'גרסת מקור';
+      case 'processing':
+        return 'בתהליך עיבוד';
       case 'processed':
-        return 'מעובד';
+        return 'מעובד AI';
       case 'final':
         return 'סופי';
       case 'archived':
@@ -117,10 +121,10 @@ export default function ItemList({
               כותרת
             </TableCell>
             <TableCell align="center" sx={{ fontWeight: 'bold', width: '14%' }}>
-              Workspace
+              עולם תוכן/לקוח
             </TableCell>
             <TableCell align="center" sx={{ fontWeight: 'bold', width: '14%' }}>
-              נושא
+              נושא/פרויקט
             </TableCell>
             <TableCell align="center" sx={{ fontWeight: 'bold', width: '10%' }}>
               סטטוס

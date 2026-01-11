@@ -27,6 +27,8 @@ export default function ItemCard({ item, onDelete }: ItemCardProps) {
     switch (status) {
       case 'draft':
         return 'default';
+      case 'processing':
+        return 'warning';
       case 'processed':
         return 'info';
       case 'final':
@@ -42,8 +44,10 @@ export default function ItemCard({ item, onDelete }: ItemCardProps) {
     switch (status) {
       case 'draft':
         return 'גרסת מקור';
+      case 'processing':
+        return 'בתהליך עיבוד';
       case 'processed':
-        return 'מעובד';
+        return 'מעובד AI';
       case 'final':
         return 'סופי';
       case 'archived':

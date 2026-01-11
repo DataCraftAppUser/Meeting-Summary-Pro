@@ -11,6 +11,8 @@ import {
   DialogActions,
   Button,
   TextField,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
 import ItemForm from '../components/Items/ItemForm';
@@ -151,10 +153,10 @@ const ItemEditor: React.FC = () => {
     }
   };
 
-  // ✅ יצירת Workspace חדש
+  // ✅ יצירת עולם תוכן חדש
   const handleWorkspaceCreate = async () => {
     if (!newWorkspaceName.trim()) {
-      showToast('נא להזין שם Workspace', 'warning');
+      showToast('נא להזין שם עולם תוכן', 'warning');
       return;
     }
 
@@ -167,11 +169,11 @@ const ItemEditor: React.FC = () => {
         setFormData(prev => ({ ...prev, workspace_id: newWorkspace.id }));
         setWorkspaceDialogOpen(false);
         setNewWorkspaceName('');
-        showToast('Workspace נוצר בהצלחה', 'success');
+        showToast('עולם תוכן נוצר בהצלחה', 'success');
       }
     } catch (error) {
       console.error('Error creating workspace:', error);
-      showToast('שגיאה ביצירת Workspace', 'error');
+      showToast('שגיאה ביצירת עולם תוכן', 'error');
     } finally {
       setCreatingWorkspace(false);
     }
@@ -180,12 +182,12 @@ const ItemEditor: React.FC = () => {
   // ✅ יצירת נושא חדש
   const handleTopicCreate = async () => {
     if (!newTopicName.trim()) {
-      showToast('נא להזין שם נושא', 'warning');
+      showToast('נא להזין שם נושא/פרויקט', 'warning');
       return;
     }
 
     if (!formData.workspace_id) {
-      showToast('נא לבחור Workspace תחילה', 'warning');
+      showToast('נא לבחור עולם תוכן תחילה', 'warning');
       return;
     }
 
@@ -279,9 +281,35 @@ const ItemEditor: React.FC = () => {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h5">
-            {id && id !== 'new' ? 'עריכת פריט' : 'פריט חדש'}
+            {id && id !== 'new' ? 'עריכת תוכן' : 'תוכן חדש'}
           </Typography>
         </Box>
+
+        <ToggleButtonGroup
+          value={formData.content_type || 'meeting'}
+          exclusive
+          onChange={(_, newValue) => {
+            if (newValue) {
+              handleFormChange({ content_type: newValue });
+            }
+          }}
+          size="small"
+          color="primary"
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            borderRadius: 2,
+            '& .MuiToggleButton-root': {
+              px: 3,
+              py: 0.5,
+              fontWeight: 600,
+            }
+          }}
+        >
+          <ToggleButton value="knowledge">פריט ידע</ToggleButton>
+          <ToggleButton value="meeting">סיכום פגישה</ToggleButton>
+          <ToggleButton value="work_log">יומן עבודה</ToggleButton>
+        </ToggleButtonGroup>
+
         <Button
           variant="contained"
           startIcon={<SaveIcon />}
@@ -304,12 +332,12 @@ const ItemEditor: React.FC = () => {
 
       {/* Workspace Dialog */}
       <Dialog open={workspaceDialogOpen} onClose={() => setWorkspaceDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>צור Workspace חדש</DialogTitle>
+        <DialogTitle>צור עולם תוכן חדש</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             fullWidth
-            label="שם ה-Workspace"
+            label="שם עולם התוכן"
             value={newWorkspaceName}
             onChange={(e) => setNewWorkspaceName(e.target.value)}
             sx={{ mt: 2 }}
@@ -326,12 +354,12 @@ const ItemEditor: React.FC = () => {
 
       {/* Topic Dialog */}
       <Dialog open={topicDialogOpen} onClose={() => setTopicDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>צור נושא חדש</DialogTitle>
+        <DialogTitle>צור נושא/פרויקט חדש</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             fullWidth
-            label="שם הנושא"
+            label="שם הנושא/פרויקט"
             value={newTopicName}
             onChange={(e) => setNewTopicName(e.target.value)}
             sx={{ mt: 2 }}

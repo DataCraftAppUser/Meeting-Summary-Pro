@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import HomeIcon from '@mui/icons-material/Home';
-import BusinessIcon from '@mui/icons-material/Business';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 export default function Header() {
@@ -61,7 +61,7 @@ export default function Header() {
               color: 'white',
             }}
           >
-            <BusinessIcon sx={{ fontSize: 24 }} />
+            <AutoAwesomeIcon sx={{ fontSize: 24 }} />
           </Box>
           <Box>
             <Typography
@@ -76,7 +76,7 @@ export default function Header() {
                 letterSpacing: '-0.01em',
               }}
             >
-              DataCraft Meeting Pro
+              CraftDocAI
             </Typography>
             <Typography
               variant="caption"
@@ -86,22 +86,11 @@ export default function Header() {
                 mt: -0.5,
               }}
             >
-              פלטפורמת סיכומי פגישות מתקדמת
+              תיעוד חכם וניהול ידע מבוסס AI
             </Typography>
           </Box>
         </Box>
 
-        <Typography
-          variant="subtitle1"
-          sx={{
-            mr: 3,
-            display: { xs: 'none', sm: 'block' },
-            fontWeight: 500,
-            color: 'text.secondary',
-          }}
-        >
-          פריטים
-        </Typography>
 
         <IconButton
           color="inherit"
@@ -138,7 +127,7 @@ export default function Header() {
             transition: 'all 0.2s ease-in-out',
           }}
         >
-          {isMobile ? 'חדש' : 'פריט חדש'}
+          {isMobile ? 'חדש' : 'תוכן חדש'}
         </Button>
       </Toolbar>
     </AppBar>

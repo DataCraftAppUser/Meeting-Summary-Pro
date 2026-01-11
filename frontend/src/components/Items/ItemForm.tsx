@@ -114,6 +114,20 @@ export default function ItemForm({
     });
   }, [followUpRequired, followUpTbd]);
 
+  // ✨ אוטומציה לכותרת יומן עבודה
+  useEffect(() => {
+    if (formData.content_type === 'work_log' && formData.workspace_id) {
+      const workspace = workspaces.find(w => w.id === formData.workspace_id);
+      if (workspace) {
+        const newTitle = `יומן עבודה: ${workspace.name}`;
+        // עדכן רק אם הכותרת ריקה או שהיא כבר בפורמט של יומן עבודה (כדי לא לדרוס שינוי ידני מכוון)
+        if (!formData.title || formData.title.startsWith('יומן עבודה:')) {
+          onChange({ title: newTitle });
+        }
+      }
+    }
+  }, [formData.content_type, formData.workspace_id, workspaces]);
+
   const handleAccordionChange = (section: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedSections(prev => {
       if (isExpanded) {
@@ -176,6 +190,25 @@ export default function ItemForm({
     ? topics.filter(t => t.workspace_id === formData.workspace_id)
     : topics;
 
+  // 🏷️ התאמת כותרות לפי סוג תוכן
+  const getSection1Label = () => {
+    switch (formData.content_type) {
+      case 'work_log': return 'פרטי יומן העבודה';
+      case 'knowledge': return 'פרטי פריט הידע';
+      default: return 'פרטי פגישה';
+    }
+  };
+
+  const getSection2Label = () => {
+    switch (formData.content_type) {
+      case 'work_log': return 'תוכן יומן העבודה';
+      case 'knowledge': return 'תוכן פריט הידע';
+      default: return 'תוכן הפגישה';
+    }
+  };
+
+  const showAdditionalInfo = formData.content_type === 'meeting' || !formData.content_type;
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={he}>
       <Box>
@@ -190,16 +223,16 @@ export default function ItemForm({
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box display="flex" alignItems="center" gap={1}>
               <DescriptionIcon color="primary" />
-              <Typography variant="h6">פרטי הפריט</Typography>
+              <Typography variant="h6">{getSection1Label()}</Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails>
             <Grid container spacing={2}>
-              {/* כותרת הפריט */}
+              {/* כותרת */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="כותרת הפריט"
+                  label="כותרת"
                   value={formData.title}
                   onChange={(e) => onChange({ title: e.target.value })}
                   required
@@ -210,72 +243,7 @@ export default function ItemForm({
                 />
               </Grid>
 
-              {/* סוג תוכן */}
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  select
-                  fullWidth
-                  label="סוג תוכן"
-                  value={formData.content_type || 'meeting'}
-                  onChange={(e) => onChange({ content_type: e.target.value as 'meeting' | 'work_log' | 'knowledge' })}
-                >
-                  <MenuItem value="meeting">פגישה</MenuItem>
-                  <MenuItem value="work_log">יומן עבודה</MenuItem>
-                  <MenuItem value="knowledge">ידע</MenuItem>
-                </TextField>
-              </Grid>
-
-              {/* תאריך */}
-              <Grid item xs={12} sm={6} md={3}>
-                <DatePicker
-                  label="תאריך"
-                  value={formData.meeting_date ? new Date(formData.meeting_date) : null}
-                  onChange={(date: Date | null) =>
-                    onChange({ meeting_date: date ? date.toISOString().split('T')[0] : '' })
-                  }
-                  components={{
-                    OpenPickerIcon: ArrowDropDownIcon
-                  }}
-                  renderInput={(params: any) => (
-                    <TextField
-                      {...params}
-                      fullWidth
-                      required
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: <EventIcon sx={{ mr: 1, color: 'action.active' }} />,
-                      }}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* שעה */}
-              <Grid item xs={12} sm={6} md={3}>
-                <TimePicker
-                  label="שעה"
-                  value={getTimeValue()}
-                  onChange={(date: Date | null) => onChange({ meeting_time: formatTimeString(date) })}
-                  minutesStep={5}
-                  ampm={false}
-                  components={{
-                    OpenPickerIcon: ArrowDropDownIcon
-                  }}
-                  renderInput={(params: any) => (
-                    <TextField
-                      {...params}
-                      fullWidth
-                      required
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: <AccessTimeIcon sx={{ mr: 1, color: 'action.active' }} />,
-                      }}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* Workspace */}
+              {/* עולם תוכן */}
               <Grid item xs={12} sm={6} md={3}>
                 <Autocomplete
                   options={workspaces}
@@ -290,7 +258,7 @@ export default function ItemForm({
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Workspace"
+                      label="עולם תוכן/לקוח"
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -309,7 +277,7 @@ export default function ItemForm({
                   onClick={onCreateWorkspace}
                   sx={{ mt: 0.5 }}
                 >
-                  צור Workspace
+                  צור עולם תוכן
                 </Button>
               </Grid>
 
@@ -324,7 +292,7 @@ export default function ItemForm({
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="נושא"
+                      label="נושא/פרויקט"
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -344,41 +312,105 @@ export default function ItemForm({
                   disabled={!formData.workspace_id}
                   sx={{ mt: 0.5 }}
                 >
-                  צור נושא
+                  צור נושא/פרויקט
                 </Button>
               </Grid>
 
-              {/* משתתפים */}
-              <Grid item xs={12}>
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  options={[]}
-                  value={formData.participants || []}
-                  onChange={(_, value) => onChange({ participants: value as string[] })}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip label={option} {...getTagProps({ index })} key={index} />
-                    ))
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="משתתפים"
-                      placeholder="הוסף משתתף..."
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <>
-                            <PeopleIcon sx={{ mr: 1, color: 'action.active' }} />
-                            {params.InputProps.startAdornment}
-                          </>
-                        ),
+              {/* תאריך */}
+              <Grid item xs={12} sm={6} md={3}>
+                  <DatePicker
+                    label="תאריך"
+                    value={formData.meeting_date ? new Date(formData.meeting_date) : null}
+                    onChange={(date: Date | null) =>
+                      onChange({ meeting_date: date ? date.toISOString().split('T')[0] : '' })
+                    }
+                    components={{
+                      OpenPickerIcon: ArrowDropDownIcon
+                    }}
+                    renderInput={(params: any) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        required
+                        InputProps={{
+                          ...params.InputProps,
+                          startAdornment: <EventIcon sx={{ mr: 1, color: 'action.active' }} />,
+                        }}
+                        inputProps={{
+                          ...params.inputProps,
+                          style: { textAlign: 'right' },
+                          dir: 'rtl'
+                        }}
+                      />
+                    )}
+                  />
+                </Grid>
+
+                {/* שעה */}
+                {formData.content_type !== 'knowledge' && formData.content_type !== 'work_log' && (
+                  <Grid item xs={12} sm={6} md={3}>
+                    <TimePicker
+                      label="שעה"
+                      value={getTimeValue()}
+                      onChange={(date: Date | null) => onChange({ meeting_time: formatTimeString(date) })}
+                      minutesStep={5}
+                      ampm={false}
+                      components={{
+                        OpenPickerIcon: ArrowDropDownIcon
                       }}
+                      renderInput={(params: any) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          required
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: <AccessTimeIcon sx={{ mr: 1, color: 'action.active' }} />,
+                          }}
+                          inputProps={{
+                            ...params.inputProps,
+                            style: { textAlign: 'right' },
+                            dir: 'rtl'
+                          }}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
+                </Grid>
+              )}
+
+              {/* משתתפים */}
+              {formData.content_type !== 'knowledge' && (
+                <Grid item xs={12}>
+                  <Autocomplete
+                    multiple
+                    freeSolo
+                    options={[]}
+                    value={formData.participants || []}
+                    onChange={(_, value) => onChange({ participants: value as string[] })}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => (
+                        <Chip label={option} {...getTagProps({ index })} key={index} />
+                      ))
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="משתתפים"
+                        placeholder="הוסף משתתף..."
+                        InputProps={{
+                          ...params.InputProps,
+                          startAdornment: (
+                            <>
+                              <PeopleIcon sx={{ mr: 1, color: 'action.active' }} />
+                              {params.InputProps.startAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
             </Grid>
           </AccordionDetails>
         </Accordion>
@@ -394,7 +426,7 @@ export default function ItemForm({
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box display="flex" alignItems="center" gap={1}>
               <EditIcon color="primary" />
-              <Typography variant="h6">תוכן הפריט</Typography>
+              <Typography variant="h6">{getSection2Label()}</Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails>
@@ -412,194 +444,223 @@ export default function ItemForm({
         {/* ========================================
             Section 3: מידע נוסף
         ======================================== */}
-        <Accordion
-          expanded={expandedSections.includes('section3')}
-          onChange={handleAccordionChange('section3')}
-          sx={{ mb: 2 }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <SettingsIcon color="primary" />
-              <Typography variant="h6">מידע נוסף</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box>
-              {/* משימות להמשך */}
-              <Box mb={4}>
-                <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-                  📋 משימות להמשך
-                </Typography>
-
-                {actionItems.length > 0 ? (
-                  <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell width="40%">שם המשימה</TableCell>
-                          <TableCell width="25%">מבצע</TableCell>
-                          <TableCell width="25%">תאריך יעד</TableCell>
-                          <TableCell width="10%" align="center">פעולות</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {actionItems.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                size="small"
-                                value={item.task}
-                                onChange={(e) =>
-                                  handleUpdateActionItem(item.id, 'task', e.target.value)
-                                }
-                                placeholder="שם המשימה"
-                                required
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                size="small"
-                                value={item.assignee}
-                                onChange={(e) =>
-                                  handleUpdateActionItem(item.id, 'assignee', e.target.value)
-                                }
-                                placeholder="מבצע"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <DatePicker
-                                value={item.due_date ? new Date(item.due_date) : null}
-                                onChange={(date: Date | null) =>
-                                  handleUpdateActionItem(
-                                    item.id,
-                                    'due_date',
-                                    date ? date.toISOString().split('T')[0] : undefined
-                                  )
-                                }
-                                components={{
-                                  OpenPickerIcon: ArrowDropDownIcon
-                                }}
-                                renderInput={(params: any) => (
-                                  <TextField {...params} fullWidth size="small" />
-                                )}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteActionItem(item.id)}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    אין משימות עדיין
-                  </Typography>
-                )}
-
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddActionItem}
-                  size="small"
-                >
-                  הוסף משימה
-                </Button>
+        {showAdditionalInfo && (
+          <Accordion
+            expanded={expandedSections.includes('section3')}
+            onChange={handleAccordionChange('section3')}
+            sx={{ mb: 2 }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <SettingsIcon color="primary" />
+                <Typography variant="h6">מידע נוסף</Typography>
               </Box>
-
-              {/* פגישת Follow Up */}
+            </AccordionSummary>
+            <AccordionDetails>
               <Box>
-                <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-                  🔁 פגישת Follow Up
-                </Typography>
+                {/* משימות להמשך */}
+                <Box mb={4}>
+                  <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+                    📋 משימות להמשך
+                  </Typography>
 
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={followUpRequired}
-                      onChange={(e) => setFollowUpRequired(e.target.checked)}
-                    />
-                  }
-                  label="נדרשת פגישת המשך?"
-                />
+                  {actionItems.length > 0 ? (
+                    <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell width="40%">שם המשימה</TableCell>
+                            <TableCell width="25%">מבצע</TableCell>
+                            <TableCell width="25%">תאריך יעד</TableCell>
+                            <TableCell width="10%" align="center">פעולות</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {actionItems.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  value={item.task}
+                                  onChange={(e) =>
+                                    handleUpdateActionItem(item.id, 'task', e.target.value)
+                                  }
+                                  placeholder="שם המשימה"
+                                  required
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  value={item.assignee}
+                                  onChange={(e) =>
+                                    handleUpdateActionItem(item.id, 'assignee', e.target.value)
+                                  }
+                                  placeholder="מבצע"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <DatePicker
+                                  value={item.due_date ? new Date(item.due_date) : null}
+                                  onChange={(date: Date | null) =>
+                                    handleUpdateActionItem(
+                                      item.id,
+                                      'due_date',
+                                      date ? date.toISOString().split('T')[0] : undefined
+                                    )
+                                  }
+                                  components={{
+                                    OpenPickerIcon: ArrowDropDownIcon
+                                  }}
+                                  renderInput={(params: any) => (
+                                    <TextField
+                                      {...params}
+                                      fullWidth
+                                      size="small"
+                                      inputProps={{
+                                        ...params.inputProps,
+                                        style: { textAlign: 'right' },
+                                        dir: 'rtl'
+                                      }}
+                                    />
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDeleteActionItem(item.id)}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      אין משימות עדיין
+                    </Typography>
+                  )}
 
-                {followUpRequired && (
-                  <Grid container spacing={2} sx={{ mt: 1 }}>
-                    <Grid item xs={12} sm={4}>
-                      <DatePicker
-                        label="תאריך"
-                        value={formData.follow_up_date ? new Date(formData.follow_up_date) : null}
-                        onChange={(date: Date | null) =>
-                          onChange({
-                            follow_up_date: date ? date.toISOString().split('T')[0] : undefined,
-                          })
-                        }
-                        disabled={followUpTbd}
-                        components={{
-                          OpenPickerIcon: ArrowDropDownIcon
-                        }}
-                        renderInput={(params: any) => (
-                          <TextField {...params} fullWidth size="small" />
-                        )}
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddActionItem}
+                    size="small"
+                  >
+                    הוסף משימה
+                  </Button>
+                </Box>
+
+                {/* פגישת Follow Up */}
+                <Box>
+                  <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+                    🔁 פגישת Follow Up
+                  </Typography>
+
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={followUpRequired}
+                        onChange={(e) => setFollowUpRequired(e.target.checked)}
                       />
-                    </Grid>
+                    }
+                    label="נדרשת פגישת המשך?"
+                  />
 
-                    <Grid item xs={12} sm={4}>
-                      <TimePicker
-                        label="שעה"
-                        value={
-                          formData.follow_up_time
-                            ? (() => {
-                                const [hours, minutes] = formData.follow_up_time.split(':').map(Number);
-                                const date = new Date();
-                                date.setHours(hours, minutes, 0, 0);
-                                return date;
-                              })()
-                            : null
-                        }
-                        onChange={(date: Date | null) =>
-                          onChange({
-                            follow_up_time: date ? date.toTimeString().slice(0, 5) : undefined,
-                          })
-                        }
-                        minutesStep={5}
-                        ampm={false}
-                        disabled={followUpTbd}
-                        components={{
-                          OpenPickerIcon: ArrowDropDownIcon
-                        }}
-                        renderInput={(params: any) => (
-                          <TextField {...params} fullWidth size="small" />
-                        )}
-                      />
-                    </Grid>
+                  {followUpRequired && (
+                    <Grid container spacing={2} sx={{ mt: 1 }}>
+                      <Grid item xs={12} sm={4}>
+                        <DatePicker
+                          label="תאריך"
+                          value={formData.follow_up_date ? new Date(formData.follow_up_date) : null}
+                          onChange={(date: Date | null) =>
+                            onChange({
+                              follow_up_date: date ? date.toISOString().split('T')[0] : undefined,
+                            })
+                          }
+                          disabled={followUpTbd}
+                          components={{
+                            OpenPickerIcon: ArrowDropDownIcon
+                          }}
+                          renderInput={(params: any) => (
+                            <TextField
+                              {...params}
+                              fullWidth
+                              size="small"
+                              inputProps={{
+                                ...params.inputProps,
+                                style: { textAlign: 'right' },
+                                dir: 'rtl'
+                              }}
+                            />
+                          )}
+                        />
+                      </Grid>
 
-                    <Grid item xs={12} sm={4}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={followUpTbd}
-                            onChange={(e) => setFollowUpTbd(e.target.checked)}
-                          />
-                        }
-                        label="יקבע בהמשך"
-                      />
+                      <Grid item xs={12} sm={4}>
+                        <TimePicker
+                          label="שעה"
+                          value={
+                            formData.follow_up_time
+                              ? (() => {
+                                  const [hours, minutes] = formData.follow_up_time.split(':').map(Number);
+                                  const date = new Date();
+                                  date.setHours(hours, minutes, 0, 0);
+                                  return date;
+                                })()
+                              : null
+                          }
+                          onChange={(date: Date | null) =>
+                            onChange({
+                              follow_up_time: date ? date.toTimeString().slice(0, 5) : undefined,
+                            })
+                          }
+                          minutesStep={5}
+                          ampm={false}
+                          disabled={followUpTbd}
+                          components={{
+                            OpenPickerIcon: ArrowDropDownIcon
+                          }}
+                          renderInput={(params: any) => (
+                            <TextField
+                              {...params}
+                              fullWidth
+                              size="small"
+                              inputProps={{
+                                ...params.inputProps,
+                                style: { textAlign: 'right' },
+                                dir: 'rtl'
+                              }}
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} sm={4}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={followUpTbd}
+                              onChange={(e) => setFollowUpTbd(e.target.checked)}
+                            />
+                          }
+                          label="יקבע בהמשך"
+                        />
+                      </Grid>
                     </Grid>
-                  </Grid>
-                )}
+                  )}
+                </Box>
               </Box>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
+            </AccordionDetails>
+          </Accordion>
+        )}
       </Box>
     </LocalizationProvider>
   );
