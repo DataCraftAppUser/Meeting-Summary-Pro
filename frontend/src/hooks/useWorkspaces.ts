@@ -14,7 +14,7 @@ export function useWorkspaces() {
       const response = await api.getWorkspaces({ limit: 1000 });
       setWorkspaces(response.data);
     } catch (error: any) {
-      showToast('שגיאה בטעינת Workspaces', 'error');
+      showToast('שגיאה בטעינת עולמות תוכן', 'error');
       console.error('Error fetching workspaces:', error);
     } finally {
       setLoading(false);
@@ -28,7 +28,7 @@ export function useWorkspaces() {
         const workspace = await api.getWorkspace(id);
         return workspace;
       } catch (error: any) {
-        showToast('שגיאה בטעינת Workspace', 'error');
+        showToast('שגיאה בטעינת עולם תוכן', 'error');
         console.error('Error fetching workspace:', error);
         return null;
       } finally {
@@ -43,11 +43,11 @@ export function useWorkspaces() {
       setLoading(true);
       try {
         const workspace = await api.createWorkspace(data);
-        showToast('Workspace נוצר בהצלחה', 'success');
+        showToast('עולם תוכן נוצר בהצלחה', 'success');
         await fetchWorkspaces(); // Refresh list
         return workspace;
       } catch (error: any) {
-        showToast('שגיאה ביצירת Workspace', 'error');
+        showToast('שגיאה ביצירת עולם תוכן', 'error');
         console.error('Error creating workspace:', error);
         return null;
       } finally {
@@ -62,11 +62,11 @@ export function useWorkspaces() {
       setLoading(true);
       try {
         const workspace = await api.updateWorkspace(id, data);
-        showToast('Workspace עודכן בהצלחה', 'success');
+        showToast('עולם תוכן עודכן בהצלחה', 'success');
         await fetchWorkspaces(); // Refresh list
         return workspace;
       } catch (error: any) {
-        showToast('שגיאה בעדכון Workspace', 'error');
+        showToast('שגיאה בעדכון עולם תוכן', 'error');
         console.error('Error updating workspace:', error);
         return null;
       } finally {
@@ -81,11 +81,11 @@ export function useWorkspaces() {
       setLoading(true);
       try {
         await api.deleteWorkspace(id);
-        showToast('Workspace נמחק בהצלחה', 'success');
+        showToast('עולם תוכן נמחק בהצלחה', 'success');
         await fetchWorkspaces(); // Refresh list
         return true;
       } catch (error: any) {
-        showToast('שגיאה במחיקת Workspace', 'error');
+        showToast('שגיאה במחיקת עולם תוכן', 'error');
         console.error('Error deleting workspace:', error);
         return false;
       } finally {

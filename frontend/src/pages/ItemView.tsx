@@ -32,6 +32,7 @@ import { useToast } from '../hooks/useToast';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
 import Loading from '../components/Common/Loading';
 import RichTextEditor from '../components/Common/RichTextEditor';
+import ConfirmDialog from '../components/Common/ConfirmDialog';
 
 const ItemView = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +52,7 @@ const ItemView = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editedProcessedContent, setEditedProcessedContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [processConfirmOpen, setProcessConfirmOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,6 +87,16 @@ const ItemView = () => {
   const handleProcess = async () => {
     if (!item) return;
 
+    // ✅ בדיקה אם קיימים שינויים ידניים
+    if (item.is_processed_manually_updated) {
+      setProcessConfirmOpen(true);
+      return;
+    }
+
+    startProcessing();
+  };
+
+  const startProcessing = async () => {
     setProcessing(true);
     try {
       console.log('🤖 Starting process for item:', item.id);
@@ -443,12 +455,12 @@ ${content}
         <Stack direction="row" spacing={3} mb={2} flexWrap="wrap" alignItems="center">
           {item.workspaces && (
             <Typography variant="body2" color="text.secondary">
-              <Box component="span" sx={{ fontWeight: 'bold' }}>Workspace:</Box> {item.workspaces.name}
+              <Box component="span" sx={{ fontWeight: 'bold' }}>עולם תוכן/לקוח:</Box> {item.workspaces.name}
             </Typography>
           )}
           {item.topics && (
             <Typography variant="body2" color="text.secondary">
-              <Box component="span" sx={{ fontWeight: 'bold' }}>נושא:</Box> {item.topics.name}
+              <Box component="span" sx={{ fontWeight: 'bold' }}>נושא/פרויקט:</Box> {item.topics.name}
             </Typography>
           )}
           <Typography variant="body2" color="text.secondary">
@@ -477,7 +489,7 @@ ${content}
               onContextMenu={handleContextMenu}
               sx={{ position: 'relative' }}
             >
-              גרסה מעובדת
+              גרסת AI
             </ToggleButton>
           </ToggleButtonGroup>
 
@@ -677,12 +689,25 @@ ${content}
             <>
               {' • '}
               <Typography variant="caption" color="text.secondary">
-                גרסה מעובדת עודכנה ידנית
+                גרסת AI עודכנה ידנית
               </Typography>
             </>
           )}
         </Box>
       </Paper>
+
+      {/* Modern Confirm Dialog for AI Processing */}
+      <ConfirmDialog
+        open={processConfirmOpen}
+        title="עיבוד AI מחדש"
+        message="שים לב: קיימים שינויים ידניים בגרסת ה-AI. עיבוד מחדש יחליף את העריכה שלך בטקסט חדש."
+        onConfirm={() => {
+          setProcessConfirmOpen(false);
+          startProcessing();
+        }}
+        onCancel={() => setProcessConfirmOpen(false)}
+        severity="warning"
+      />
     </Container>
   );
 };

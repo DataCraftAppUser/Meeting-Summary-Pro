@@ -41,7 +41,7 @@ const buildFullRawContent = (data: {
 // ✅ GET /api/items - קבלת רשימת פריטים
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { workspace_id, topic_id, status, search, page = 1, limit = 10 } = req.query;
+    const { workspace_id, topic_id, status, content_type, search, page = 1, limit = 10 } = req.query;
 
     let query = supabase
       .from('items')
@@ -54,6 +54,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     if (workspace_id) query = query.eq('workspace_id', workspace_id);
     if (topic_id) query = query.eq('topic_id', topic_id);
     if (status) query = query.eq('status', status);
+    if (content_type) query = query.eq('content_type', content_type);
     if (search) {
       query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
     }

@@ -1,5 +1,5 @@
 {
-  "name": "meeting-summary-backend",
+  "name": "meeting_summary_backend",
   "version": "1.0.0",
   "description": "Backend API for Meeting Summary Pro - AI-powered meeting summaries",
   "main": "dist/server.js",
